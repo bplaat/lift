@@ -6,5 +6,6 @@ int main(void) {
     printf("Werkt dit?\n") ;
     printf("Deniz hier\n") ;
     printf("Werkt dit?\n") ;
+    printf("W?\n") ;
     return EXIT_SUCCESS;
 }
