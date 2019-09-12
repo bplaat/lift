@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 int main(void) {
-    printf("Hello World!\n");
+    printf("Hello Bastiaan!\n");
     printf("Werkt dit?\n") ;
     return EXIT_SUCCESS;
 }
