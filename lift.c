@@ -3,5 +3,6 @@
 
 int main(void) {
     printf("Hello World!\n");
+    printf("Werkt dit?\n") ;
     return EXIT_SUCCESS;
 }
