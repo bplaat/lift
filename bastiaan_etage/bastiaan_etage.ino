@@ -7,25 +7,25 @@
 // Made by Bastiaan van der Plaat
 
 // The pins you connect the segment display to from a to g
-byte digit_display_pins[7] = { 2, 3, 4, 5, 6, 7, 8 };
+uint8_t digit_display_pins[7] = { 2, 3, 4, 5, 6, 7, 8 };
 
 // The segments for each digit that will be turn on
-byte digit_display_digits[10] = {
+uint8_t digit_display_digits[10] = {
   0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110,
   0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111
 };
 
 // Function the initialize the pins
 void digit_display_init(void) {
-  for (byte i = 0; i < 7; i++) {
+  for (uint8_t i = 0; i < 7; i++) {
     pinMode(digit_display_pins[i], OUTPUT);
   }
 }
 
 // Function that sets a single digit from 0 to 9
-void digit_display_set_digit(byte digit) {
+void digit_display_set_digit(uint8_t digit) {
   if (digit > 9) return;
-  for (byte i = 0; i < 7; i++) {
+  for (uint8_t i = 0; i < 7; i++) {
     digitalWrite(digit_display_pins[i], (digit_display_digits[digit] >> i) & 1 ? HIGH : LOW);
   }
 }
@@ -33,8 +33,9 @@ void digit_display_set_digit(byte digit) {
 // ### Main code ###
 
 #define BUTTON_PIN 9
+#define LED_PIN 10
 
-byte counter = 0;
+uint8_t counter = 0;
 bool button_pressed = false;
 
 void setup() {
@@ -46,6 +47,9 @@ void setup() {
 
   // Set pin mode for button to input pullup
   pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+  // Set pin mode for led to output
+  pinMode(LED_PIN, OUTPUT);
 }
 
 void loop() {
@@ -56,6 +60,7 @@ void loop() {
   if (digitalRead(BUTTON_PIN) == LOW) {
     if (!button_pressed) {
       button_pressed = true;
+      digitalWrite(LED_PIN, HIGH);
 
       // Increment the counter
       if (counter == 9) {
@@ -64,7 +69,8 @@ void loop() {
         counter++;
       }
     }
-  } else{
+  } else {
     button_pressed = false;
+    digitalWrite(LED_PIN, LOW);
   }
 }
