@@ -50,14 +50,16 @@ void receiveEvent()
         char c = Wire.read(); // receive byte as a character
         Serial.print(c);      // print the character
     }
-    int x = Wire.read(); // receive byte as an integer
-    Serial.println(x);   // print the integer
+    char recieved_byte = Wire.read(); // receive byte as an integer
+    Serial.print(recieved_byte);   // print the integer
 }
 
 void setup()
 {
     setup_IO();
     setup_I2C();
+    Serial.begin(9600);
+    Serial.println("JACO_ETAGE is online");
 }
 
 void loop()
