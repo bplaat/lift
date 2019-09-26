@@ -1,28 +1,28 @@
-const int a = 8;  //For displaying segment "a"
-const int b = 9;  //For displaying segment "b"
-const int c = 4;  //For displaying segment "c"
-const int d = 5;  //For displaying segment "d"
-const int e = 6;  //For displaying segment "e"
-const int f = 2;  //For displaying segment "f"
-const int g = 3;  //For displaying segment "g"
+const int a = 8;  //segment "a"
+const int b = 9;  //segment "b"
+const int c = 4;  //segment "c"
+const int d = 5;  //segment "d"
+const int e = 6;  //segment "e"
+const int f = 2;  //segment "f"
+const int g = 3;  //segment "g"
 
 bool bPress = false;
 const int buttonPin = 10;
 
-// Variables will change:
-int buttonPushCounter = 0;   // counter for the number of button presses
-int buttonState = 0;         // current state of the button
-int lastButtonState = 0;     // previous state of the button
+// Variables die zullen veranderen:
+int buttonPushCounter = 0;   // teller voor de knop
+int buttonState = 0;         // huidige staat van de knop
+int lastButtonState = 0;     // vorige staat van de knop
 
 void setup() {
-  // put your setup code here, to run once:
-  pinMode(a, OUTPUT);  //A
-  pinMode(b, OUTPUT);  //B
-  pinMode(c, OUTPUT);  //C
-  pinMode(d, OUTPUT);  //D
-  pinMode(e, OUTPUT);  //E
-  pinMode(f, OUTPUT);  //F
-  pinMode(g, OUTPUT);  //G
+
+  pinMode(a, OUTPUT);
+  pinMode(b, OUTPUT);
+  pinMode(c, OUTPUT);
+  pinMode(d, OUTPUT);
+  pinMode(e, OUTPUT);
+  pinMode(f, OUTPUT);
+  pinMode(g, OUTPUT);
 
   pinMode( buttonPin , INPUT_PULLUP );
   Serial.begin(9600);
@@ -31,76 +31,74 @@ void setup() {
 
 void loop() {
 
-   buttonState = digitalRead(buttonPin);
+  buttonState = digitalRead(buttonPin);
 
-   // compare the buttonState to its previous state
+  // vergelijkt de staat van de knop met de vorige
   if (buttonState != lastButtonState) {
-    // if the state has changed, increment the counter
+    // als de state veranderd is, pas de teller aan
     if (buttonState == LOW) {
-      // if the current state is HIGH then the button went from off to on:
+      // als de huidige state HIGH is dan is de knop van off naar on gegaan:
       bPress = true;
       buttonPushCounter++;
-      if( buttonPushCounter > 9) buttonPushCounter =0 ;
+      if ( buttonPushCounter > 9)
+        buttonPushCounter = 0 ;
       Serial.println("on");
-    
+
     } else {
-      // if the current state is LOW then the button went from on to off:
+      // als de huidige state LOW is dan is de knop van on naar off gegaan:
       Serial.println("off");
     }
-    // Delay a little bit to avoid bouncing
-    delay(50);
+    delay(100);
   }
-  // save the current state as the last state, for next time through the loop
+  // bewaar de huidige state als de vorige state voor de loop
   lastButtonState = buttonState;
 
-  if( bPress ){
-     turnOff();
-     displayDigit(buttonPushCounter);
+  if ( bPress ) {
+    turnOff();
+    displayDigit(buttonPushCounter);
   }
 
-
 }
-
 
 
 void displayDigit(int digit)
 {
- //Conditions for displaying segment a
- if(digit!=1 && digit != 4)
- digitalWrite(a,HIGH);
+  //Conditie voor segment a
+  if (digit != 1 && digit != 4)
+    digitalWrite(a, HIGH);
 
- //Conditions for displaying segment b
- if(digit != 5 && digit != 6)
- digitalWrite(b,HIGH);
+  //Conditie voor segment b
+  if (digit != 5 && digit != 6)
+    digitalWrite(b, HIGH);
 
- //Conditions for displaying segment c
- if(digit !=2)
- digitalWrite(c,HIGH);
+  //Conditie voor segment c
+  if (digit != 2)
+    digitalWrite(c, HIGH);
 
- //Conditions for displaying segment d
- if(digit != 1 && digit !=4 && digit !=7)
- digitalWrite(d,HIGH);
+  //Conditie voor segment d
+  if (digit != 1 && digit != 4 && digit != 7)
+    digitalWrite(d, HIGH);
 
- //Conditions for displaying segment e
- if(digit == 2 || digit ==6 || digit == 8 || digit==0)
- digitalWrite(e,HIGH);
+  //Conditie voor segment e
+  if (digit == 2 || digit == 6 || digit == 8 || digit == 0)
+    digitalWrite(e, HIGH);
 
- //Conditions for displaying segment f
- if(digit != 1 && digit !=2 && digit!=3 && digit !=7)
- digitalWrite(f,HIGH);
+  //Conditie voor segment f
+  if (digit != 1 && digit != 2 && digit != 3 && digit != 7)
+    digitalWrite(f, HIGH);
 
- //Conditions for displaying segment g
- if (digit!=0 && digit!=1 && digit !=7)
- digitalWrite(g,HIGH);
+  //Conditie voor segment g
+  if (digit != 0 && digit != 1 && digit != 7)
+    digitalWrite(g, HIGH);
 
 }
 void turnOff()
 {
-  digitalWrite(a,LOW);
-  digitalWrite(b,LOW);
-  digitalWrite(c,LOW);
-  digitalWrite(d,LOW);
-  digitalWrite(e,LOW);
-  digitalWrite(f,LOW);
-  digitalWrite(g,LOW);
+  digitalWrite(a, LOW);
+  digitalWrite(b, LOW);
+  digitalWrite(c, LOW);
+  digitalWrite(d, LOW);
+  digitalWrite(e, LOW);
+  digitalWrite(f, LOW);
+  digitalWrite(g, LOW);
 }
