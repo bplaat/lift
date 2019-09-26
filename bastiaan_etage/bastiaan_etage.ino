@@ -11,16 +11,16 @@
 uint8_t counter = 0;
 bool button_pressed = false;
 
-DigitalDisplay *digit_display;
+DigitDisplay *digit_display;
+uint8_t digit_display_pins[7] = { 2, 3, 4, 5, 6, 7, 8 };
 
 void setup() {
     Serial.begin(9600);
     Serial.println("Bastiaan's Etage");
 
-    digit_display = digit_display_new({ 2, 3, 4, 5, 6, 7, 8 });
+    digit_display = digit_display_new(digit_display_pins);
 
     pinMode(BUTTON_PIN, INPUT_PULLUP);
-
     pinMode(LED_PIN, OUTPUT);
 }
 
@@ -38,7 +38,8 @@ void loop() {
                 counter++;
             }
         }
-    } else {
+    }
+    else {
         button_pressed = false;
         digitalWrite(LED_PIN, LOW);
     }

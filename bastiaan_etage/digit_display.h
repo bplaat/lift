@@ -10,7 +10,7 @@ typedef struct DigitDisplay {
 } DigitDisplay;
 
 DigitDisplay *digit_display_new(uint8_t *pins) {
-    DigitDisplay *digit_display = malloc(sizeof(DigitDisplay));
+    DigitDisplay *digit_display = (DigitDisplay *)malloc(sizeof(DigitDisplay));
     digit_display->pins = pins;
     for (uint8_t i = 0; i < 7; i++) {
         pinMode(digit_display->pins[i], OUTPUT);
@@ -31,7 +31,7 @@ uint8_t digit_display_digits[16] = {
 };
 
 void digit_display_set_digit(DigitDisplay *digit_display, uint8_t digit) {
-    if (digit >= 0 && digit <= 15) {
+    if (digit <= 15) {
         digit_display_set_bits(digit_display, digit_display_digits[digit]);
     }
 }
