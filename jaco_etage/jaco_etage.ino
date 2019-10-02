@@ -16,6 +16,29 @@
 DigitDisplay *display;
 uint8_t display_pins[7] = {2, 3, 4, 5, 6, 7, 8};
 
+void set_display(uint8_t digit)
+{
+    static bool knipper_state = 0;
+    static long millis_start = millis();
+    if (knipper_state == false)
+    {
+        digit_display_set_digit(display, digit);
+        if (millis_start + 100 < millis())
+        {
+            knipper_state = true;
+            millis_start = millis();
+        }
+    }
+    if (knipper_state == true)
+    {
+        if (millis_start + 1000 < millis())
+        {
+            knipper_state = false;
+            millis_start = millis();
+        }
+    }
+}
+
 void setup_IO()
 {
     pinMode(BUTTON_DOWN, OUTPUT);
@@ -73,5 +96,14 @@ void loop()
     }
     send_is_lift_here = digitalRead(REED) ? LIFT_IS_HERE : LIFT_IS_NOT_HERE;
     Serial.println("lift is: " + send_is_lift_here);
+
     digitalWrite(LED, send_is_lift_here);
+    if (recieved_stop_accepted == STOP_FOR_DOWN_ACCEPTED)
+    {
+        digitalWrite(BUTTON_DOWN_LED, HIGH);
+    }
+    if (recieved_stop_accepted == STOP_FOR_UP_ACCEPTED)
+    {
+        digitalWrite(BUTTON_UP_LED, HIGH);
+    }
 }

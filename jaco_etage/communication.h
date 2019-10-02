@@ -32,7 +32,7 @@ void receiveEvent()
 {
     recieved_floor = Wire.read();
     recieved_direction = Wire.read();
-    recieved_is_requested_stop_accepted = Wire.read();
+    recieved_stop_accepted = Wire.read();
 }
 void requestEvent()
 {
