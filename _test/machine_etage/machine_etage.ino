@@ -1,10 +1,12 @@
 #include <Wire.h>
 
 #define DEBUG
+
 #define ETAGE_ADDRESSES_LENGTH 2
+#define PROTOCOL_RETURN_MESSAGE_LENGTH 2
 
 uint8_t lift_cabine_etage = 0;
-uint8_t lift_cabine_direction = 0;
+int8_t lift_cabine_direction = 0;
 
 void setup() {
   #ifdef DEBUG
@@ -16,31 +18,47 @@ void setup() {
 
 void loop() {
   #ifdef DEBUG
-    Serial.print("lift_cabine_etage = ");
+    Serial.print("<- lift_cabine_etage = ");
     Serial.println(lift_cabine_etage);
-    Serial.print("lift_cabine_direction = ");
+    Serial.print("<- lift_cabine_direction = ");
     Serial.println(lift_cabine_direction);
   #endif
   
-  for (uint8_t i = 1; i <= ETAGE_ADDRESSES_LENGTH; i++) {
-    Wire.beginTransmission(i);
+  for (uint8_t address = 1; address <= ETAGE_ADDRESSES_LENGTH; address++) {
+    Wire.beginTransmission(address);
     Wire.write(lift_cabine_etage);
     Wire.write(lift_cabine_direction);
+    Wire.write(0);
     Wire.endTransmission();
 
-    Wire.requestFrom(i, 1);
+    Wire.requestFrom(address, PROTOCOL_RETURN_MESSAGE_LENGTH);
     if (Wire.available()) {
       uint8_t lift_cabine_is_here = Wire.read();
-
       #ifdef DEBUG
-        Serial.print("lift_cabine_is_here[");
-        Serial.print(i);
+        Serial.print("-> lift_cabine_is_here[");
+        Serial.print(address);
         Serial.print("] = ");
         Serial.println(lift_cabine_is_here);
       #endif
-      
+
       if (lift_cabine_is_here == 1) {
-        lift_cabine_etage = i;
+        lift_cabine_etage = address;
+      }
+
+      int8_t lift_request_stop = Wire.read();
+      #ifdef DEBUG
+        Serial.print("-> lift_request_stop[");
+        Serial.print(address);
+        Serial.print("] = ");
+        Serial.println(lift_request_stop);
+      #endif
+
+      if (lift_request_stop == -1) {
+        
+      }
+
+      if (lift_request_stop == 1) {
+        
       }
     }
   }
