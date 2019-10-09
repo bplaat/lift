@@ -1,145 +1,126 @@
+ // Deniz Kahriman 0984809
+ 
+ #include "digit_display.h"
  #include <Wire.h>
  #include <stdint.h>
  #include <Arduino.h>
 
- const int a = 7;  //segment "a"
- const int b = 8;  //segment "b"
- const int c = 4;  //segment "c"
- const int d = 5;  //segment "d"
- const int e = 6;  //segment "e"
- const int f = 2;  //segment "f"
- const int g = 3;  //segment "g"
-
-
- #define whiteLed 10
- #define redLed 13
  #define DENIZ_ETAGE 2
- #define noStopNeeded 0
- #define stopForUp 1
- #define stopForDown 2
-
- bool buttonUpPress = false;   
- bool buttonDownPress = false; 
-
- const int buttonPinUp = 11;
- const int buttonPinDown = 12;
-
- int reedSwitchPin = A5;
- int stateReed = 0;
- int liftHere = 0;
- int ledPin = 9;
  
- byte masterEtage = 0;
- byte masterDirection = 0;
- byte masterStop = 0;
+ #define stopForDown -1
+ #define noStop 0
+ #define stopForUp 1
+ 
+ int liftSendStop = 0;
 
+ int whiteLed = A2; // led up button
+ int redLed = A4;  // led down button
+ int ledPin = 9;  // led here 
+ 
+ bool buttonUpPress = false;    // button up input
+ bool buttonDownPress = false; // button down input
+ const int buttonPinUp = A3;
+ const int buttonPinDown = A5;
 
-void setup() {  
-  
- pinMode(a, OUTPUT);
- pinMode(b, OUTPUT);
- pinMode(c, OUTPUT);
- pinMode(d, OUTPUT);
- pinMode(e, OUTPUT);
- pinMode(f, OUTPUT);
- pinMode(g, OUTPUT);
+ int reedSwitchPin = 10; // reed sensor pin connected to
+ int liftHere = 0;
+ 
+ // i2c
+ byte receiveEtage = 0;
+ byte receiveDirection = 0;
+ byte receiveStop = 0;
+ byte sendStop = 0;
 
- Serial.print(9600);
- Wire.begin(DENIZ_ETAGE);
+ // 7 segment display
+ DigitDisplay *display;
+ uint8_t display_pins[7] = {2, 3, 4, 5, 6, 7, 8};
+ int displayMaster = 0;
+
+ 
+void setup() { 
+
+ Serial.begin(9600);
+ 
+ Wire.begin(DENIZ_ETAGE);  //join i2c bus with address 2
+ Serial.println("Deniz etage online");
  Wire.onReceive(receiveEvent);          
  Wire.onRequest(requestEvent);
-
+ 
  pinMode(whiteLed, OUTPUT);
  pinMode(redLed, OUTPUT);
- pinMode(buttonPinUp, INPUT);
- pinMode(buttonPinDown, INPUT);
-
+ pinMode(buttonPinUp, INPUT_PULLUP);
+ pinMode(buttonPinDown, INPUT_PULLUP);
  pinMode(reedSwitchPin, INPUT);
-
+ pinMode(ledPin, OUTPUT);
+ 
+ display = digit_display_new(display_pins);
+ 
+ digitalWrite(redLed, LOW);
+ digitalWrite(whiteLed, LOW); 
+ 
 }
 
 void loop() {
 
-if(digitalRead(buttonPinUp)){
-    buttonUpPress = true; 
-    
-  }else if(digitalRead(buttonPinDown)){
-    buttonDownPress = true;
-  }
+ digit_display_set_digit(display,displayMaster);
 
-  if (buttonUpPress == true)
-    digitalWrite(whiteLed, HIGH);
 
-  if (buttonDownPress == true)
-    digitalWrite(redLed, HIGH);  
+ if (digitalRead(buttonPinUp)){
+   liftSendStop = stopForUp;
+   
+ }else if (digitalRead(buttonPinUp)){
+  liftSendStop = stopForDown;
+  
+ }else{
+  liftSendStop = noStop;
+ }
 
-  liftHere = digitalRead(reedSwitchPin);
 
-  if(liftHere, HIGH){
+ if (liftSendStop == LOW){
+      buttonUpPress = true;   
+      Serial.println("White led on");
+      digitalWrite(whiteLed, HIGH);
+    } else {
+      Serial.println("off");
+    }
+     
+ if (liftSendStop == LOW){
+      buttonDownPress = true;
+      Serial.println("Red led on");
+      digitalWrite(redLed, HIGH);
+    } else {
+     Serial.println("off");
+    }
+  
+
+ liftHere = digitalRead(reedSwitchPin);
+ 
+  if (liftHere == HIGH) {
+    Serial.println("Reed active");
+    Serial.println("Led for here on");
     digitalWrite(ledPin, HIGH);
+    digitalWrite(whiteLed, LOW);
+    digitalWrite(redLed, LOW);
+  }else{
+    digitalWrite(ledPin, LOW);
   }
+ }
 
-}
+void receiveEvent(){
 
-
-void receiveEvent (){
-
- masterEtage = Wire.read();
- masterDirection = Wire.read();
- masterStop = Wire.read();
+ Serial.println("receive");
+ receiveEtage = Wire.read();
+ receiveDirection = Wire.read();
+ receiveStop = Wire.read();
+ displayMaster = Wire.read();
                   
 }
 
-
 void requestEvent(){
-  
-  Wire.write(buttonPinUp);
-  Wire.write(buttonPinDown);
+
+  Serial.println("request");  
+  Wire.write(1);
   Wire.write(liftHere);
-     
-}
-
-
-void displayDigit(int digit){
-  
-  //Conditie voor segment a
-  if (digit != 1 && digit != 4)
-    digitalWrite(a, HIGH);
-
-  //Conditie voor segment b
-  if (digit != 5 && digit != 6)
-    digitalWrite(b, HIGH);
-
-  //Conditie voor segment c
-  if (digit != 2)
-    digitalWrite(c, HIGH);
-
-  //Conditie voor segment d
-  if (digit != 1 && digit != 4 && digit != 7)
-    digitalWrite(d, HIGH);
-
-  //Conditie voor segment e
-  if (digit == 2 || digit == 6 || digit == 8 || digit == 0)
-    digitalWrite(e, HIGH);
-
-  //Conditie voor segment f
-  if (digit != 1 && digit != 2 && digit != 3 && digit != 7)
-    digitalWrite(f, HIGH);
-
-  //Conditie voor segment g
-  if (digit != 0 && digit != 1 && digit != 7)
-    digitalWrite(g, HIGH);
-
-}
-
-
-void turnOff()
-{
-  digitalWrite(a, LOW);
-  digitalWrite(b, LOW);
-  digitalWrite(c, LOW);
-  digitalWrite(d, LOW);
-  digitalWrite(e, LOW);
-  digitalWrite(f, LOW);
-  digitalWrite(g, LOW);
+  Wire.write(sendStop);
+    
 }
