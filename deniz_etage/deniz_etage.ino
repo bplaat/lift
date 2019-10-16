@@ -139,8 +139,9 @@ void loop() {
     digitalWrite(redLed, LOW);
   } else {
     digitalWrite(ledPin, LOW);
-    writeDigit(0);
+    writeDigit(receiveEtage);
   }
+ 
 
 
   
