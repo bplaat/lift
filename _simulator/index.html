@@ -36,7 +36,7 @@ a {
     width: 180px;
     height: 180px;
     background-color: #777;
-    transition: top ease-in-out 1s;
+    transition: top ease-in-out 4s;
 }
 
 .lift-etage {
@@ -101,14 +101,14 @@ a {
 }
 
 .lift-etage-button-up {
-    background-color: #bbb;
+    background-color: #999;
 }
 .lift-etage-button-up-on {
     background-color: #fff;
 }
 
 .lift-etage-button-down {
-    background-color: #b00;
+    background-color: #900;
 }
 .lift-etage-button-down-on {
     background-color: #f00;
@@ -203,39 +203,64 @@ var LIFT_ETAGES_COUNT = 6;
 
 var LIFT_STATE_STILL = 0;
 var LIFT_STATE_MOVING = 1;
+var LIFT_STATE_STOPING = 2;
 
 var UP = 1;
 var DOWN = -1;
 
 var slaves = [];
 
-var stops = [];
-
 function master () {
     var lift_etage = 0;
     var lift_state = LIFT_STATE_STILL;
+    var lift_direction = 0;
 
-    lift_state = LIFT_STATE_MOVING;
-    lift_cabine.style.top = (LIFT_CABINE_TOP + LIFT_ETAGE_SIZE) + 'px';
+    var stops = [];
+    var inform_stops = [];
 
     lift_cabine.addEventListener('transitionend', function () {
-        if (stops.length > 0) {
-            for (var i = 0; i < stops.length; i++) {
-                if (stops[i].etage == lift_etage) {
-                    stops.splice(i--, 1);
-                }
-            }
-        }
         lift_state = LIFT_STATE_STILL;
+        if (stops.length > 0 && stops[0].etage == lift_etage) {
+            inform_stops.push(stops[0].etage);
+            stops.shift();
+            setTimeout(function () {
+                console.log('Stop', stops);
+                if (stops.length > 0) {
+                    lift_state = LIFT_STATE_MOVING;
+                    lift_direction = stops[0].direction;
+                    lift_cabine.style.top = (LIFT_CABINE_TOP + (LIFT_ETAGES_COUNT + 1 - stops[0].etage) * LIFT_ETAGE_SIZE) + 'px';
+                }
+            }, 500);
+        }
     }, false);
 
-    function loop () {
-        if (lift_state == LIFT_STATE_STILL && stops.length > 0) {
-            var stop = stops[0];
+    function update_stops (stop) {
+        if (lift_state == LIFT_STATE_STILL) {
+            stops.push(stop);
             lift_state = LIFT_STATE_MOVING;
+            lift_direction = stop.direction;
             lift_cabine.style.top = (LIFT_CABINE_TOP + (LIFT_ETAGES_COUNT + 1 - stop.etage) * LIFT_ETAGE_SIZE) + 'px';
         }
+        else if (lift_state == LIFT_STATE_MOVING) {
+            for (var i = 0; i < stops.length; i++) {
+                if (
+                    Math.abs(lift_etage - stops[i].etage) > Math.abs(lift_etage - stop.etage) &&
+                    lift_direction == stop.direction
+                ) {
+                    stops.splice(i, 0, stop);
+                    if (i == 0) {
+                        lift_cabine.style.top = (LIFT_CABINE_TOP + (LIFT_ETAGES_COUNT + 1 - stop.etage) * LIFT_ETAGE_SIZE) + 'px';
+                    }
+                    console.log('Early', stops);
+                    return;
+                }
+            }
+            stops.push(stop);
+            console.log('Late', stops);
+        }
+    }
 
+    function loop () {
         for (var i = 1; i <= LIFT_ETAGES_COUNT; i++) {
             var slave;
             for (var j = 0; j < slaves.length; j++) {
@@ -250,16 +275,22 @@ function master () {
                 if (stops[j].etage == i && !stops[j].reported) {
                     lift_stop_accepted = stops[j].direction;
                     stops[j].reported = true;
+                    break;
                 }
             }
-            slave.onreceive([ lift_etage, lift_state, lift_stop_accepted ]);
+
+            var inform_stop = false;
+            for (var j = 0; j < inform_stops.length; j++) {
+                if (inform_stops[j] == i) {
+                    inform_stop = true;
+                    inform_stops.splice(j);
+                    break;
+                }
+            }
+
+            slave.onreceive([ lift_etage, inform_stop ?  LIFT_STATE_STOPING : lift_state, lift_stop_accepted ]);
 
             var data = slave.onrequest();
-
-            var ping = data[0];
-            if (ping != 1) {
-                console.log('Slave ' + i + ' disconnected!');
-            }
 
             var lift_is_here = data[1];
             if (lift_is_here == 1) {
@@ -268,23 +299,20 @@ function master () {
 
             var lift_request_stop = data[2];
             if (lift_request_stop == UP) {
-                if (lift_state == LIFT_STATE_MOVING) {
-
-                } else {
-                    stops.push({ etage: i, direction: 1, reported: false });
+                if (lift_state == LIFT_STATE_STILL || lift_state == LIFT_STATE_MOVING) {
+                    update_stops({ etage: i, direction: UP, reported: false });
                 }
             }
             if (lift_request_stop == DOWN) {
-                if (lift_state == LIFT_STATE_MOVING) {
-
-                } else {
-                    stops.push({ etage: i, direction: -1, reported: false });
+                if (lift_state == LIFT_STATE_STILL || lift_state == LIFT_STATE_MOVING) {
+                    update_stops({ etage: i, direction: DOWN, reported: false });
                 }
             }
         }
         setTimeout(loop, 100);
     }
     loop();
+    update_stops({ etage: 6, direction: UP, reported: false });
 }
 
 function slave (etage) {
@@ -300,6 +328,8 @@ function slave (etage) {
     var lift_stop_accepted = 0;
 
     var BLINK_TIME = 200;
+    var BLINK_STATE_OFF = 0;
+    var BLINK_STATE_ON = 1;
     var blink_state = 0;
     var blink_time = Date.now();
 
@@ -311,16 +341,16 @@ function slave (etage) {
             lift_cabine_center < (LIFT_ETAGES_COUNT + 2 - etage) * LIFT_ETAGE_SIZE;
 
         if (lift_state == LIFT_STATE_MOVING) {
-            if (blink_state == 0 && Date.now() - blink_time > BLINK_TIME) {
-                blink_state = 1;
+            if (blink_state == BLINK_STATE_OFF && Date.now() - blink_time > BLINK_TIME) {
+                blink_state = BLINK_STATE_ON;
                 blink_time = Date.now();
             }
-            if (blink_state == 1 && Date.now() - blink_time > BLINK_TIME) {
-                blink_state = 0;
+            if (blink_state == BLINK_STATE_ON && Date.now() - blink_time > BLINK_TIME) {
+                blink_state = BLINK_STATE_OFF;
                 blink_time = Date.now();
             }
 
-            if (blink_state == 1) {
+            if (blink_state == BLINK_STATE_ON) {
                 lift_etage_digit_display.textContent = lift_etage;
             } else {
                 lift_etage_digit_display.textContent = ' ';
@@ -337,14 +367,8 @@ function slave (etage) {
 
         if (lift_stop_accepted == UP) {
             lift_etage_button_up.classList.add('lift-etage-button-up-on');
-            if (lift_is_here) {
-                lift_stop_accepted = 0;
-            }
         } else if (lift_stop_accepted == DOWN) {
             lift_etage_button_down.classList.add('lift-etage-button-down-on');
-            if (lift_is_here) {
-                lift_stop_accepted = 0;
-            }
         } else {
             lift_etage_button_up.classList.remove('lift-etage-button-up-on');
             lift_etage_button_down.classList.remove('lift-etage-button-down-on');
@@ -355,13 +379,13 @@ function slave (etage) {
     loop();
 
     lift_etage_button_up.addEventListener('click', function () {
-        if (lift_stop_accepted != UP) {
+        if (lift_stop_accepted == 0) {
             lift_request_stop = UP;
         }
     }, false);
 
     lift_etage_button_down.addEventListener('click', function () {
-        if (lift_stop_accepted != DOWN) {
+        if (lift_stop_accepted == 0) {
             lift_request_stop = DOWN;
         }
     }, false);
@@ -371,6 +395,9 @@ function slave (etage) {
         onreceive: function (data) {
             lift_etage = data[0];
             lift_state = data[1];
+            if (lift_state == LIFT_STATE_STOPING) {
+                lift_stop_accepted = 0;
+            }
             if (data[2] != 0) {
                 lift_stop_accepted = data[2];
             }
