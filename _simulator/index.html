@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>De Lift Simulator</title>
+    <style>
+body, button {
+    font-family: sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+body {
+    margin: 16px;
+    color: #111;
+    background-color: #fff;
+}
+
+.lift {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    border: 4px solid #111;
+    background-color: #333;
+}
+
+@keyframes lift-move {
+    0%, 100% {
+        top: 30px;
+    }
+
+    50% {
+        top: calc(100% - 210px);
+    }
+}
+
+.lift-coupe {
+    position: absolute;
+    top: 0px;
+    left: 30px;
+    width: 180px;
+    height: 180px;
+    background-color: #777;
+    animation: lift-move ease-in-out 10s infinite;
+}
+
+.lift-etage {
+    display: flex;
+}
+
+.lift-etage-gap {
+    margin: 16px;
+    width: 200px;
+    height: 200px;
+    border: 4px solid #666;
+    background-color: #111;
+}
+
+.lift-etage-controls {
+    display: flex;
+    flex-direction: column;
+}
+
+.lift-etage-controls {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 16px;
+}
+
+.lift-etage-digit-display {
+    display: inline-block;
+    line-height: 1;
+    font-family: monospace;
+    font-size: 24px;
+    font-weight: bold;
+    padding: 8px;
+    color: #fff;
+    background-color: #000;
+    margin: 8px auto;
+}
+
+.lift-etage-led {
+    background-color: #500;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    font-weight: bold;
+    margin: 8px auto;
+}
+.lift-etage-led-on {
+    background-color: #f00;
+}
+
+.lift-etage-button {
+    margin: 8px 0;
+    padding: 6px 16px;
+}
+
+.lift-etage-button-up {
+    background-color: #bbb;
+}
+.lift-etage-button-up-on {
+    background-color: #fff;
+}
+
+.lift-etage-button-down {
+    background-color: #b00;
+}
+.lift-etage-button-down-on {
+    background-color: #f00;
+}
+
+
+    </style>
+</head>
+<body>
+    <h1>De Lift Simulator</h1>
+
+    <div class="lift">
+        <div class="lift-coupe"></div>
+
+        <div class="lift-etage" style="background-color: violet;">
+            <div class="lift-etage-gap"></div>
+            <div class="lift-etage-controls"></div>
+        </div>
+
+
+        <div class="lift-etage" style="background-color: indigo;">
+            <div class="lift-etage-gap"></div>
+            <div class="lift-etage-controls">
+                <div id="lif-etage-6-digit-display" class="lift-etage-digit-display">6</div>
+                <div id="lif-etage-6-led" class="lift-etage-led"></div>
+                <button id="lif-etage-6-button-up" class="lift-etage-button lift-etage-button-up">&uarr;</button>
+                <button id="lif-etage-6-button-down" class="lift-etage-button lift-etage-button-down">&darr;</button>
+            </div>
+        </div>
+
+        <div class="lift-etage" style="background-color: blue;">
+            <div class="lift-etage-gap"></div>
+            <div class="lift-etage-controls">
+                <div id="lif-etage-5-digit-display" class="lift-etage-digit-display">5</div>
+                <div id="lif-etage-5-led" class="lift-etage-led"></div>
+                <button id="lif-etage-5-button-up" class="lift-etage-button lift-etage-button-up">&uarr;</button>
+                <button id="lif-etage-5-button-down" class="lift-etage-button lift-etage-button-down">&darr;</button>
+            </div>
+        </div>
+
+        <div class="lift-etage" style="background-color: green;">
+            <div class="lift-etage-gap"></div>
+            <div class="lift-etage-controls">
+                <div id="lif-etage-4-digit-display" class="lift-etage-digit-display">4</div>
+                <div id="lif-etage-4-led" class="lift-etage-led"></div>
+                <button id="lif-etage-4-button-up" class="lift-etage-button lift-etage-button-up">&uarr;</button>
+                <button id="lif-etage-4-button-down" class="lift-etage-button lift-etage-button-down">&darr;</button>
+            </div>
+        </div>
+
+        <div class="lift-etage" style="background-color: yellow;">
+            <div class="lift-etage-gap"></div>
+            <div class="lift-etage-controls">
+                <div id="lif-etage-3-digit-display" class="lift-etage-digit-display">3</div>
+                <div id="lif-etage-3-led" class="lift-etage-led"></div>
+                <button id="lif-etage-3-button-up" class="lift-etage-button lift-etage-button-up">&uarr;</button>
+                <button id="lif-etage-3-button-down" class="lift-etage-button lift-etage-button-down">&darr;</button>
+            </div>
+        </div>
+
+        <div class="lift-etage" style="background-color: orange;">
+            <div class="lift-etage-gap"></div>
+            <div class="lift-etage-controls">
+                <div id="lif-etage-2-digit-display" class="lift-etage-digit-display">2</div>
+                <div id="lif-etage-2-led" class="lift-etage-led"></div>
+                <button id="lif-etage-2-button-up" class="lift-etage-button lift-etage-button-up">&uarr;</button>
+                <button id="lif-etage-2-button-down" class="lift-etage-button lift-etage-button-down">&darr;</button>
+            </div>
+        </div>
+
+        <div class="lift-etage" style="background-color: red;">
+            <div class="lift-etage-gap"></div>
+            <div class="lift-etage-controls">
+                <div id="lif-etage-1-digit-display" class="lift-etage-digit-display">1</div>
+                <div id="lif-etage-1-led" class="lift-etage-led"></div>
+                <button id="lif-etage-1-button-up" class="lift-etage-button lift-etage-button-up">&uarr;</button>
+                <button id="lif-etage-1-button-down" class="lift-etage-button lift-etage-button-down">&darr;</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
