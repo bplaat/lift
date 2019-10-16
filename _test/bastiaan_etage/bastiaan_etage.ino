@@ -43,7 +43,7 @@ bool downButtonDown = false;
 #define IR_SENSOR_PIN A0
 
 uint8_t lift_cabine_etage = 0;
-int8_t lift_cabine_direction = 0;
+int8_t lift_cabine_state = 0;
 uint8_t lift_cabine_is_here = 0;
 int8_t lift_request_stop = 0;
 int8_t lift_stop_accepted = 0;
@@ -75,9 +75,7 @@ void loop() {
   lift_cabine_is_here = analogRead(IR_SENSOR_PIN) < 50;
   digitalWrite(LED_PIN, lift_cabine_is_here);
 
-  if (lift_cabine_direction == 0) {
-    digit_display_set_digit(lift_cabine_etage);
-  } else {
+  if (lift_cabine_state == 1) {
     if (blink_state == 0 && millis() - blink_time > BLINK_TIME) {
       blink_state = 1;
       blink_time = millis();
@@ -92,6 +90,8 @@ void loop() {
     } else {
       digit_display_set_bits(0);
     }
+  } else {
+    digit_display_set_digit(lift_cabine_etage);
   }
 
   digitalWrite(UP_LED_PIN, lift_stop_accepted == 1);
@@ -116,6 +116,11 @@ void loop() {
 }
 
 void requestEvent() {
+  Wire.write(1);
+  #ifdef DEBUG
+    Serial.println("<- ping = 1");
+  #endif
+
   Wire.write(lift_cabine_is_here);
   #ifdef DEBUG
     Serial.print("<- lift_cabine_is_here = ");
@@ -138,10 +143,10 @@ void receiveEvent() {
     Serial.println(lift_cabine_etage);
   #endif
 
-  lift_cabine_direction = Wire.read();
+  lift_cabine_state = Wire.read();
   #ifdef DEBUG
-    Serial.print("-> lift_cabine_direction = ");
-    Serial.println(lift_cabine_direction);
+    Serial.print("-> lift_cabine_state = ");
+    Serial.println(lift_cabine_state);
   #endif
 
   int8_t new_lift_stop_accepted = Wire.read();
@@ -149,7 +154,7 @@ void receiveEvent() {
     lift_stop_accepted = new_lift_stop_accepted;
     #ifdef DEBUG
       Serial.print("-> lift_stop_accepted = ");
-      Serial.println(lift_cabine_direction);
+      Serial.println(lift_cabine_state);
     #endif
   }
 }
