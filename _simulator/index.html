@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>De Lift Simulator</title>
     <style>
-body, button {
+body, input, button {
     font-family: sans-serif;
     font-size: 16px;
     line-height: 1.5;
@@ -36,7 +36,7 @@ a {
     width: 180px;
     height: 180px;
     background-color: #777;
-    transition: top ease-in-out 4s;
+    transition: top ease-in-out 1s;
 }
 
 .lift-etage {
@@ -63,8 +63,15 @@ a {
     padding: 16px;
 }
 
+.lift-etage-number-input {
+    width: 16px;
+    padding: 8px;
+    text-align: center;
+}
+
 .lift-etage-digit-display {
     display: inline-block;
+    white-space: pre;
     line-height: 1;
     font-family: monospace;
     font-size: 24px;
@@ -112,14 +119,14 @@ a {
     <h1>De Lift Simulator</h1>
     <p>Gemaakt door <a href="https://bastiaan.ml/" target="_blank">Bastiaan van der Plaat</a></p>
 
-    <p><button id="reset-button">Reset</button></p>
-
     <div class="lift">
         <div id="lift-cabine" class="lift-cabine"></div>
 
         <div class="lift-etage" style="background-color: violet;">
             <div class="lift-etage-gap"></div>
-            <div class="lift-etage-controls"></div>
+            <div class="lift-etage-controls">
+                <input type="text" class="lift-etage-number-input">
+            </div>
         </div>
 
         <div class="lift-etage" style="background-color: indigo;">
@@ -183,24 +190,52 @@ a {
         </div>
     </div>
     <script>
-
-function rand (min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function rand (min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 var lift_cabine = document.getElementById('lift-cabine');
-
-var LIFT_ETAGES_COUNT = 6;
 var LIFT_CABINE_TOP = 30;
 var LIFT_CABINE_SIZE = 180;
 var LIFT_ETAGE_SIZE = 240;
 
+var LIFT_ETAGES_COUNT = 6;
+
+var LIFT_STATE_STILL = 0;
+var LIFT_STATE_MOVING = 1;
+
+var UP = 1;
+var DOWN = -1;
+
 var slaves = [];
+
+var stops = [];
 
 function master () {
     var lift_etage = 0;
+    var lift_state = LIFT_STATE_STILL;
 
+    lift_state = LIFT_STATE_MOVING;
     lift_cabine.style.top = (LIFT_CABINE_TOP + LIFT_ETAGE_SIZE) + 'px';
 
+    lift_cabine.addEventListener('transitionend', function () {
+        if (stops.length > 0) {
+            for (var i = 0; i < stops.length; i++) {
+                if (stops[i].etage == lift_etage) {
+                    stops.splice(i--, 1);
+                }
+            }
+        }
+        lift_state = LIFT_STATE_STILL;
+    }, false);
+
     function loop () {
+        if (lift_state == LIFT_STATE_STILL && stops.length > 0) {
+            var stop = stops[0];
+            lift_state = LIFT_STATE_MOVING;
+            lift_cabine.style.top = (LIFT_CABINE_TOP + (LIFT_ETAGES_COUNT + 1 - stop.etage) * LIFT_ETAGE_SIZE) + 'px';
+        }
+
         for (var i = 1; i <= LIFT_ETAGES_COUNT; i++) {
             var slave;
             for (var j = 0; j < slaves.length; j++) {
@@ -210,7 +245,14 @@ function master () {
                 }
             }
 
-            slave.onreceive([ lift_etage ]);
+            var lift_stop_accepted = 0;
+            for (var j = 0; j < stops.length; j++) {
+                if (stops[j].etage == i && !stops[j].reported) {
+                    lift_stop_accepted = stops[j].direction;
+                    stops[j].reported = true;
+                }
+            }
+            slave.onreceive([ lift_etage, lift_state, lift_stop_accepted ]);
 
             var data = slave.onrequest();
 
@@ -222,6 +264,22 @@ function master () {
             var lift_is_here = data[1];
             if (lift_is_here == 1) {
                 lift_etage = i;
+            }
+
+            var lift_request_stop = data[2];
+            if (lift_request_stop == UP) {
+                if (lift_state == LIFT_STATE_MOVING) {
+
+                } else {
+                    stops.push({ etage: i, direction: 1, reported: false });
+                }
+            }
+            if (lift_request_stop == DOWN) {
+                if (lift_state == LIFT_STATE_MOVING) {
+
+                } else {
+                    stops.push({ etage: i, direction: -1, reported: false });
+                }
             }
         }
         setTimeout(loop, 100);
@@ -236,13 +294,40 @@ function slave (etage) {
     var lift_etage_button_down = document.getElementById('lift-etage-' + etage + '-down-button');
 
     var lift_etage = 0;
+    var lift_state = 0;
     var lift_is_here = false;
+    var lift_request_stop = 0;
+    var lift_stop_accepted = 0;
+
+    var BLINK_TIME = 200;
+    var blink_state = 0;
+    var blink_time = Date.now();
 
     function loop () {
         lift_etage_digit_display.textContent = lift_etage;
 
         var lift_cabine_center = lift_cabine.offsetTop + LIFT_CABINE_SIZE / 2;
-        lift_is_here = lift_cabine_center > (7 - etage) * LIFT_ETAGE_SIZE && lift_cabine_center < (8 - etage) * LIFT_ETAGE_SIZE;
+        lift_is_here = lift_cabine_center > (LIFT_ETAGES_COUNT + 1 - etage) * LIFT_ETAGE_SIZE &&
+            lift_cabine_center < (LIFT_ETAGES_COUNT + 2 - etage) * LIFT_ETAGE_SIZE;
+
+        if (lift_state == LIFT_STATE_MOVING) {
+            if (blink_state == 0 && Date.now() - blink_time > BLINK_TIME) {
+                blink_state = 1;
+                blink_time = Date.now();
+            }
+            if (blink_state == 1 && Date.now() - blink_time > BLINK_TIME) {
+                blink_state = 0;
+                blink_time = Date.now();
+            }
+
+            if (blink_state == 1) {
+                lift_etage_digit_display.textContent = lift_etage;
+            } else {
+                lift_etage_digit_display.textContent = ' ';
+            }
+        } else {
+            lift_etage_digit_display.textContent = lift_etage;
+        }
 
         if (lift_is_here) {
             lift_etage_led.classList.add('lift-etage-led-on');
@@ -250,27 +335,55 @@ function slave (etage) {
             lift_etage_led.classList.remove('lift-etage-led-on');
         }
 
+        if (lift_stop_accepted == UP) {
+            lift_etage_button_up.classList.add('lift-etage-button-up-on');
+            if (lift_is_here) {
+                lift_stop_accepted = 0;
+            }
+        } else if (lift_stop_accepted == DOWN) {
+            lift_etage_button_down.classList.add('lift-etage-button-down-on');
+            if (lift_is_here) {
+                lift_stop_accepted = 0;
+            }
+        } else {
+            lift_etage_button_up.classList.remove('lift-etage-button-up-on');
+            lift_etage_button_down.classList.remove('lift-etage-button-down-on');
+        }
+
         setTimeout(loop, 100);
     }
     loop();
 
     lift_etage_button_up.addEventListener('click', function () {
-
+        if (lift_stop_accepted != UP) {
+            lift_request_stop = UP;
+        }
     }, false);
 
     lift_etage_button_down.addEventListener('click', function () {
-
+        if (lift_stop_accepted != DOWN) {
+            lift_request_stop = DOWN;
+        }
     }, false);
 
     slaves.push({
         etage: etage,
         onreceive: function (data) {
             lift_etage = data[0];
+            lift_state = data[1];
+            if (data[2] != 0) {
+                lift_stop_accepted = data[2];
+            }
         },
         onrequest: function () {
             var data = [];
             data[0] = 1;
             data[1] = lift_is_here;
+            data[2] = lift_request_stop;
+            if (lift_request_stop != 0) {
+                lift_request_stop = 0;
+                lift_stop_accepted = 0;
+            }
             return data;
         }
     });
