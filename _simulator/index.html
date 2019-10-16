@@ -17,6 +17,10 @@ body {
     background-color: #fff;
 }
 
+a {
+    color: #16c;
+}
+
 .lift {
     position: relative;
     display: inline-flex;
@@ -25,24 +29,14 @@ body {
     background-color: #333;
 }
 
-@keyframes lift-move {
-    0%, 100% {
-        top: 30px;
-    }
-
-    50% {
-        top: calc(100% - 210px);
-    }
-}
-
-.lift-coupe {
+.lift-cabine {
     position: absolute;
-    top: 0px;
+    top: 30px;
     left: 30px;
     width: 180px;
     height: 180px;
     background-color: #777;
-    animation: lift-move ease-in-out 10s infinite;
+    transition: top ease-in-out 4s;
 }
 
 .lift-etage {
@@ -82,6 +76,7 @@ body {
 }
 
 .lift-etage-led {
+    border: 2px solid #000;
     background-color: #500;
     width: 8px;
     height: 8px;
@@ -111,81 +106,183 @@ body {
 .lift-etage-button-down-on {
     background-color: #f00;
 }
-
-
     </style>
 </head>
 <body>
     <h1>De Lift Simulator</h1>
+    <p>Gemaakt door <a href="https://bastiaan.ml/" target="_blank">Bastiaan van der Plaat</a></p>
+
+    <p><button id="reset-button">Reset</button></p>
 
     <div class="lift">
-        <div class="lift-coupe"></div>
+        <div id="lift-cabine" class="lift-cabine"></div>
 
         <div class="lift-etage" style="background-color: violet;">
             <div class="lift-etage-gap"></div>
             <div class="lift-etage-controls"></div>
         </div>
 
-
         <div class="lift-etage" style="background-color: indigo;">
             <div class="lift-etage-gap"></div>
             <div class="lift-etage-controls">
-                <div id="lif-etage-6-digit-display" class="lift-etage-digit-display">6</div>
-                <div id="lif-etage-6-led" class="lift-etage-led"></div>
-                <button id="lif-etage-6-button-up" class="lift-etage-button lift-etage-button-up">&uarr;</button>
-                <button id="lif-etage-6-button-down" class="lift-etage-button lift-etage-button-down">&darr;</button>
+                <div id="lift-etage-6-digit-display" class="lift-etage-digit-display">6</div>
+                <div id="lift-etage-6-led" class="lift-etage-led"></div>
+                <button id="lift-etage-6-up-button" class="lift-etage-button lift-etage-button-up">&uarr;</button>
+                <button id="lift-etage-6-down-button" class="lift-etage-button lift-etage-button-down">&darr;</button>
             </div>
         </div>
 
         <div class="lift-etage" style="background-color: blue;">
             <div class="lift-etage-gap"></div>
             <div class="lift-etage-controls">
-                <div id="lif-etage-5-digit-display" class="lift-etage-digit-display">5</div>
-                <div id="lif-etage-5-led" class="lift-etage-led"></div>
-                <button id="lif-etage-5-button-up" class="lift-etage-button lift-etage-button-up">&uarr;</button>
-                <button id="lif-etage-5-button-down" class="lift-etage-button lift-etage-button-down">&darr;</button>
+                <div id="lift-etage-5-digit-display" class="lift-etage-digit-display">5</div>
+                <div id="lift-etage-5-led" class="lift-etage-led"></div>
+                <button id="lift-etage-5-up-button" class="lift-etage-button lift-etage-button-up">&uarr;</button>
+                <button id="lift-etage-5-down-button" class="lift-etage-button lift-etage-button-down">&darr;</button>
             </div>
         </div>
 
         <div class="lift-etage" style="background-color: green;">
             <div class="lift-etage-gap"></div>
             <div class="lift-etage-controls">
-                <div id="lif-etage-4-digit-display" class="lift-etage-digit-display">4</div>
-                <div id="lif-etage-4-led" class="lift-etage-led"></div>
-                <button id="lif-etage-4-button-up" class="lift-etage-button lift-etage-button-up">&uarr;</button>
-                <button id="lif-etage-4-button-down" class="lift-etage-button lift-etage-button-down">&darr;</button>
+                <div id="lift-etage-4-digit-display" class="lift-etage-digit-display">4</div>
+                <div id="lift-etage-4-led" class="lift-etage-led"></div>
+                <button id="lift-etage-4-up-button" class="lift-etage-button lift-etage-button-up">&uarr;</button>
+                <button id="lift-etage-4-down-button" class="lift-etage-button lift-etage-button-down">&darr;</button>
             </div>
         </div>
 
         <div class="lift-etage" style="background-color: yellow;">
             <div class="lift-etage-gap"></div>
             <div class="lift-etage-controls">
-                <div id="lif-etage-3-digit-display" class="lift-etage-digit-display">3</div>
-                <div id="lif-etage-3-led" class="lift-etage-led"></div>
-                <button id="lif-etage-3-button-up" class="lift-etage-button lift-etage-button-up">&uarr;</button>
-                <button id="lif-etage-3-button-down" class="lift-etage-button lift-etage-button-down">&darr;</button>
+                <div id="lift-etage-3-digit-display" class="lift-etage-digit-display">3</div>
+                <div id="lift-etage-3-led" class="lift-etage-led"></div>
+                <button id="lift-etage-3-up-button" class="lift-etage-button lift-etage-button-up">&uarr;</button>
+                <button id="lift-etage-3-down-button" class="lift-etage-button lift-etage-button-down">&darr;</button>
             </div>
         </div>
 
         <div class="lift-etage" style="background-color: orange;">
             <div class="lift-etage-gap"></div>
             <div class="lift-etage-controls">
-                <div id="lif-etage-2-digit-display" class="lift-etage-digit-display">2</div>
-                <div id="lif-etage-2-led" class="lift-etage-led"></div>
-                <button id="lif-etage-2-button-up" class="lift-etage-button lift-etage-button-up">&uarr;</button>
-                <button id="lif-etage-2-button-down" class="lift-etage-button lift-etage-button-down">&darr;</button>
+                <div id="lift-etage-2-digit-display" class="lift-etage-digit-display">2</div>
+                <div id="lift-etage-2-led" class="lift-etage-led"></div>
+                <button id="lift-etage-2-up-button" class="lift-etage-button lift-etage-button-up">&uarr;</button>
+                <button id="lift-etage-2-down-button" class="lift-etage-button lift-etage-button-down">&darr;</button>
             </div>
         </div>
 
         <div class="lift-etage" style="background-color: red;">
             <div class="lift-etage-gap"></div>
             <div class="lift-etage-controls">
-                <div id="lif-etage-1-digit-display" class="lift-etage-digit-display">1</div>
-                <div id="lif-etage-1-led" class="lift-etage-led"></div>
-                <button id="lif-etage-1-button-up" class="lift-etage-button lift-etage-button-up">&uarr;</button>
-                <button id="lif-etage-1-button-down" class="lift-etage-button lift-etage-button-down">&darr;</button>
+                <div id="lift-etage-1-digit-display" class="lift-etage-digit-display">1</div>
+                <div id="lift-etage-1-led" class="lift-etage-led"></div>
+                <button id="lift-etage-1-up-button" class="lift-etage-button lift-etage-button-up">&uarr;</button>
+                <button id="lift-etage-1-down-button" class="lift-etage-button lift-etage-button-down">&darr;</button>
             </div>
         </div>
     </div>
+    <script>
+
+function rand (min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+var lift_cabine = document.getElementById('lift-cabine');
+
+var LIFT_ETAGES_COUNT = 6;
+var LIFT_CABINE_TOP = 30;
+var LIFT_CABINE_SIZE = 180;
+var LIFT_ETAGE_SIZE = 240;
+
+var slaves = [];
+
+function master () {
+    var lift_etage = 0;
+
+    lift_cabine.style.top = (LIFT_CABINE_TOP + LIFT_ETAGE_SIZE) + 'px';
+
+    function loop () {
+        for (var i = 1; i <= LIFT_ETAGES_COUNT; i++) {
+            var slave;
+            for (var j = 0; j < slaves.length; j++) {
+                if (slaves[j].etage == i) {
+                    slave = slaves[j];
+                    break;
+                }
+            }
+
+            slave.onreceive([ lift_etage ]);
+
+            var data = slave.onrequest();
+
+            var ping = data[0];
+            if (ping != 1) {
+                console.log('Slave ' + i + ' disconnected!');
+            }
+
+            var lift_is_here = data[1];
+            if (lift_is_here == 1) {
+                lift_etage = i;
+            }
+        }
+        setTimeout(loop, 100);
+    }
+    loop();
+}
+
+function slave (etage) {
+    var lift_etage_digit_display = document.getElementById('lift-etage-' + etage + '-digit-display');
+    var lift_etage_led = document.getElementById('lift-etage-' + etage + '-led');
+    var lift_etage_button_up = document.getElementById('lift-etage-' + etage + '-up-button');
+    var lift_etage_button_down = document.getElementById('lift-etage-' + etage + '-down-button');
+
+    var lift_etage = 0;
+    var lift_is_here = false;
+
+    function loop () {
+        lift_etage_digit_display.textContent = lift_etage;
+
+        var lift_cabine_center = lift_cabine.offsetTop + LIFT_CABINE_SIZE / 2;
+        lift_is_here = lift_cabine_center > (7 - etage) * LIFT_ETAGE_SIZE && lift_cabine_center < (8 - etage) * LIFT_ETAGE_SIZE;
+
+        if (lift_is_here) {
+            lift_etage_led.classList.add('lift-etage-led-on');
+        } else {
+            lift_etage_led.classList.remove('lift-etage-led-on');
+        }
+
+        setTimeout(loop, 100);
+    }
+    loop();
+
+    lift_etage_button_up.addEventListener('click', function () {
+
+    }, false);
+
+    lift_etage_button_down.addEventListener('click', function () {
+
+    }, false);
+
+    slaves.push({
+        etage: etage,
+        onreceive: function (data) {
+            lift_etage = data[0];
+        },
+        onrequest: function () {
+            var data = [];
+            data[0] = 1;
+            data[1] = lift_is_here;
+            return data;
+        }
+    });
+}
+
+lift_cabine.style.top = (LIFT_CABINE_TOP + rand(0, LIFT_ETAGES_COUNT * LIFT_ETAGE_SIZE - LIFT_ETAGE_SIZE / 2) + LIFT_ETAGE_SIZE / 2) + 'px';
+setTimeout(function () {
+    for (var i = 1; i <= LIFT_ETAGES_COUNT; i++) {
+        slave(i);
+    }
+    master();
+}, 100);
+    </script>
 </body>
 </html>
