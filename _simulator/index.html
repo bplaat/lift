@@ -216,12 +216,12 @@ function master () {
     var lift_direction = 0;
 
     var stops = [];
-    var inform_stops = [];
+    var inform_stop_etage = 0;
 
     lift_cabine.addEventListener('transitionend', function () {
         lift_state = LIFT_STATE_STILL;
         if (stops.length > 0 && stops[0].etage == lift_etage) {
-            inform_stops.push(stops[0].etage);
+            inform_stop_etage = stops[0].etage;
             stops.shift();
             setTimeout(function () {
                 console.log('Stop', stops);
@@ -245,7 +245,11 @@ function master () {
             for (var i = 0; i < stops.length; i++) {
                 if (
                     Math.abs(lift_etage - stops[i].etage) > Math.abs(lift_etage - stop.etage) &&
-                    lift_direction == stop.direction
+                    lift_direction == stop.direction &&
+                    (
+                        (lift_direction == UP && stop.etage > lift_etage) ||
+                        (lift_direction == DOWN && stop.etage < lift_etage)
+                    )
                 ) {
                     stops.splice(i, 0, stop);
                     if (i == 0) {
@@ -280,12 +284,9 @@ function master () {
             }
 
             var inform_stop = false;
-            for (var j = 0; j < inform_stops.length; j++) {
-                if (inform_stops[j] == i) {
-                    inform_stop = true;
-                    inform_stops.splice(j);
-                    break;
-                }
+            if (inform_stop_etage == i) {
+                inform_stop = true;
+                inform_stop_etage = 0;
             }
 
             slave.onreceive([ lift_etage, inform_stop ?  LIFT_STATE_STOPING : lift_state, lift_stop_accepted ]);
