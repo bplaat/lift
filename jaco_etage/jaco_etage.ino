@@ -13,24 +13,26 @@
 #define BUTTON_UP_LED A3
 #define REED 10
 
-DigitDisplay *display;
-uint8_t display_pins[7] = {2, 3, 4, 5, 6, 7, 8};
-
 void set_display(uint8_t digit)
 {
-    static bool knipper_state = 0;
+    static bool knipper_state = false;
     static long millis_start = millis();
-    if (knipper_state == false)
+    if (recieved_action != MOVING)
     {
-        digit_display_set_digit(display, digit);
-        if (millis_start + 100 < millis())
+        writeDigit(digit);
+    }
+    else if (knipper_state == false)
+    {
+        writeDigit(digit);
+        if (millis_start + 1000 < millis())
         {
             knipper_state = true;
             millis_start = millis();
         }
     }
-    if (knipper_state == true)
+    else if (knipper_state == true)
     {
+        writeDigit(10);
         if (millis_start + 1000 < millis())
         {
             knipper_state = false;
@@ -41,12 +43,15 @@ void set_display(uint8_t digit)
 
 void setup_IO()
 {
-    pinMode(BUTTON_DOWN, OUTPUT);
-    pinMode(BUTTON_UP, OUTPUT);
-    pinMode(BUTTON_DOWN_LED, INPUT_PULLUP);
-    pinMode(BUTTON_UP_LED, INPUT_PULLUP);
+    pinMode(BUTTON_DOWN, INPUT_PULLUP);
+    pinMode(BUTTON_UP, INPUT_PULLUP);
+    pinMode(BUTTON_DOWN_LED, OUTPUT);
+    pinMode(BUTTON_UP_LED, OUTPUT);
     pinMode(REED, INPUT);
     pinMode(LED, OUTPUT);
+    pinMode(latchPin, OUTPUT);
+    pinMode(clockPin, OUTPUT);
+    pinMode(dataPin, OUTPUT);
 }
 
 void setup()
@@ -55,34 +60,34 @@ void setup()
     setup_I2C();
     Serial.begin(9600);
     Serial.println("JACO_ETAGE is online");
-    display = digit_display_new(display_pins);
 
 #ifdef TEST
     Serial.println("testing........");
-    digitalWrite(LED, HIGH);
-    digitalWrite(BUTTON_UP_LED, HIGH);
-    digitalWrite(BUTTON_DOWN_LED, HIGH);
+    digitalWrite(LED, LOW);
+    digitalWrite(BUTTON_UP_LED, LOW);
+    digitalWrite(BUTTON_DOWN_LED, LOW);
 
     for (uint8_t i = 0; i <= 9; i++)
     {
-        digit_display_set_digit(display, i);
+        writeDigit(i);
         delay(1000);
         //https: //www.allaboutcircuits.com/projects/interface-a-seven-segment-display-to-an-arduino/
     }
 
     digitalWrite(LED, LOW);
-    digitalWrite(BUTTON_UP_LED, LOW);
-    digitalWrite(BUTTON_DOWN_LED, LOW);
+    digitalWrite(BUTTON_UP_LED, HIGH);
+    digitalWrite(BUTTON_DOWN_LED, HIGH);
 #endif
 }
 
 void loop()
 {
-    digit_display_set_digit(display, recieved_floor);
+    //writeDigit(recieved_floor);
+    set_display(recieved_floor);
     if (digitalRead(BUTTON_DOWN))
     {
         send_stop = STOP_FOR_DOWN;
-        Serial.println("down-button pressd");
+        //    Serial.println("down-button pressd");
     }
     else if (digitalRead(BUTTON_UP))
     {
@@ -92,18 +97,19 @@ void loop()
     else
     {
         send_stop = NO_STOP_NEEDED;
-        Serial.println("no stop needed");
+        //Serial.println("no stop needed");
     }
-    send_is_lift_here = digitalRead(REED) ? LIFT_IS_HERE : LIFT_IS_NOT_HERE;
-    Serial.println("lift is: " + send_is_lift_here);
+    send_is_lift_here = digitalRead(REED);
+    //Serial.println("lift is: " + send_is_lift_here);
 
     digitalWrite(LED, send_is_lift_here);
+    Serial.println(recieved_floor);
     if (recieved_stop_accepted == STOP_FOR_DOWN_ACCEPTED)
     {
-        digitalWrite(BUTTON_DOWN_LED, HIGH);
+        digitalWrite(BUTTON_DOWN_LED, LOW);
     }
     if (recieved_stop_accepted == STOP_FOR_UP_ACCEPTED)
     {
-        digitalWrite(BUTTON_UP_LED, HIGH);
+        digitalWrite(BUTTON_UP_LED, LOW);
     }
 }

@@ -1,43 +1,26 @@
-// #############################################
-// ### Digit Display Library for the Arduino ###
-// #############################################
-// Made by Bastiaan van der Plaat
 
 #pragma once
 #include <Arduino.h>
-typedef struct DigitDisplay
-{
-    uint8_t *pins;
-} DigitDisplay;
+#define clockPin 10 // pin connected to SRCLK of 74HC595
+#define dataPin 11  // pin connected to SER of 74HC595
+#define latchPin 12 // pin connected to RCLK of 74HC595
 
-DigitDisplay *digit_display_new(uint8_t *pins)
-{
-    DigitDisplay *digit_display = malloc(sizeof(DigitDisplay));
-    digit_display->pins = pins;
-    for (uint8_t i = 0; i < 7; i++)
-    {
-        pinMode(digit_display->pins[i], OUTPUT);
-    }
-    return digit_display;
-}
+const byte datArray[] = {
+    B10000001, // 0
+    B11110011, // 1
+    B01001001, // 2
+    B01100001, // 3
+    B00110011, // 4
+    B00100101, // 5
+    B00000101, // 6
+    B11110001, // 7
+    B00000001, // 8
+    B00100001, // 9
+    B11111111};
 
-void digit_display_set_bits(DigitDisplay *digit_display, uint8_t bits)
+void writeDigit(int i)
 {
-    for (uint8_t i = 0; i < 7; i++)
-    {
-        digitalWrite(digit_display->pins[i], (bits >> i) & 1);
-    }
-}
-
-uint8_t digit_display_digits[16] = {
-    0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110,
-    0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01101111,
-    0b01110111, 0b01111100, 0b00111001, 0b01011110, 0b01111001, 0b01110001};
-
-void digit_display_set_digit(DigitDisplay *digit_display, uint8_t digit)
-{
-    if (digit >= 0 && digit <= 15)
-    {
-        digit_display_set_bits(digit_display, digit_display_digits[digit]);
-    }
+    digitalWrite(latchPin, LOW);                         // latchPin low for duration of transmission
+    shiftOut(dataPin, clockPin, MSBFIRST, ~datArray[i]); // send data
+    digitalWrite(latchPin, HIGH);                        // latchPin high to save the data
 }
