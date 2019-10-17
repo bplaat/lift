@@ -12,9 +12,10 @@ body, input, button {
 }
 
 body {
-    margin: 16px;
+    margin: 0;
     color: #111;
-    background-color: #fff;
+    background-color: #eee;
+    text-align: center;
 }
 
 a {
@@ -27,7 +28,9 @@ button::-moz-focus-inner {
 
 .lift {
     position: relative;
+    overflow: hidden;
     display: inline-flex;
+    margin: 0 auto;
     flex-direction: column;
     border: 4px solid #111;
     background-color: #333;
@@ -41,6 +44,17 @@ button::-moz-focus-inner {
     height: 180px;
     background-color: #777;
     transition: top ease-in-out 4s;
+}
+
+.lift-cabine-cabel {
+    position: absolute;
+    top: -1680px;
+    left: 0;
+    right: 0;
+    width: 8px;
+    height: 1680px;
+    background-color: #444;
+    margin: 0 auto;
 }
 
 .lift-etage {
@@ -122,10 +136,11 @@ button::-moz-focus-inner {
 </head>
 <body>
     <h1>De Lift Simulator</h1>
-    <p>Gemaakt door <a href="https://bastiaan.ml/" target="_blank">Bastiaan van der Plaat</a></p>
 
     <div class="lift">
-        <div id="lift-cabine" class="lift-cabine"></div>
+        <div id="lift-cabine" class="lift-cabine">
+            <div class="lift-cabine-cabel"></div>
+        </div>
 
         <div class="lift-etage" style="background-color: #ee82ee;">
             <div class="lift-etage-gap"></div>
@@ -195,6 +210,9 @@ button::-moz-focus-inner {
             </div>
         </div>
     </div>
+
+    <p>Gemaakt door <a href="https://bastiaan.ml/" target="_blank">Bastiaan van der Plaat</a></p>
+
     <script>
 function rand (min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -220,7 +238,6 @@ function master () {
     var lift_etage = 0;
     var lift_state = LIFT_STATE_STILL;
     var lift_direction = 0;
-
     var stops = [];
 
     function handle_stops_end () {
@@ -231,9 +248,9 @@ function master () {
                 setTimeout(function () {
                     console.log('Stop', stops.slice(0));
                     if (stops.length > 0) {
-                        goto_top_etage();
+                        goto_first_stop();
                     }
-                }, 500);
+                }, 1000);
             } else {
                 stops.shift();
                 lift_state = LIFT_STATE_WAITING;
@@ -242,7 +259,7 @@ function master () {
         }
     }
 
-    function goto_top_etage() {
+    function goto_first_stop() {
         lift_state = LIFT_STATE_MOVING;
         lift_direction = stops[0].direction;
 
@@ -259,22 +276,22 @@ function master () {
             stops.push(stop);
             console.log('New', stops.slice(0));
             if (lift_state != LIFT_STATE_WAITING)  {
-                goto_top_etage();
+                goto_first_stop();
             }
         } else {
             for (var i = 0; i < stops.length; i++) {
                 if (
-                    Math.abs(lift_etage - stops[i].etage) > Math.abs(lift_etage - stop.etage) &&
-                    lift_direction == stop.direction &&
+                    Math.abs(lift_etage - stops[i].etage) >= Math.abs(lift_etage - stop.etage) &&
+                    lift_direction == stop.direction /*&&
                     (
                         (lift_direction == UP && stop.etage > lift_etage) ||
                         (lift_direction == DOWN && stop.etage < lift_etage)
-                    )
+                    )*/
                 ) {
                     stops.splice(i, 0, stop);
                     if (i == 0 && lift_state != LIFT_STATE_WAITING) {
                         console.log('First', stops.slice(0));
-                        goto_top_etage();
+                        goto_first_stop();
                     } else {
                         console.log('Early', stops.slice(0));
                     }
@@ -292,9 +309,18 @@ function master () {
     lift_machine_etage_number_input.addEventListener('input', function () {
         if (lift_state == LIFT_STATE_WAITING) {
             var etage = parseInt(lift_machine_etage_number_input.value);
-            if (etage >= 0 && etage <= LIFT_ETAGES_COUNT) {
-                update_stops({ etage: etage, direction: etage > lift_etage ? UP : DOWN, reported: true, destination: true });
-                goto_top_etage();
+            if (etage >= 0 && etage <= LIFT_ETAGES_COUNT && etage != lift_etage) {
+                var already_stop = false;
+                for (var i = 0; i < stops.length; i++) {
+                    if (stops[i].etage == etage) {
+                        already_stop = true;
+                        break;
+                    }
+                }
+                if (!already_stop) {
+                    update_stops({ etage: etage, direction: etage > lift_etage ? UP : DOWN, destination: true, reported: true });
+                }
+                goto_first_stop();
             }
             lift_machine_etage_number_input.value = '';
         }
@@ -397,7 +423,7 @@ function slave (etage) {
             lift_etage_digit_display.textContent = lift_etage;
         }
 
-        if (lift_is_here) {
+        if (lift_state != LIFT_STATE_MOVING && lift_is_here) {
             if (!lift_etage_led.classList.contains('lift-etage-led-on')) {
                 lift_etage_led.classList.add('lift-etage-led-on');
             }
@@ -423,13 +449,19 @@ function slave (etage) {
     loop();
 
     lift_etage_button_up.addEventListener('click', function () {
-        if (lift_stop_accepted == 0 && lift_request_stop == 0) {
+        if (
+            !(lift_state == LIFT_STATE_WAITING && lift_is_here) &&
+            lift_stop_accepted == 0 && lift_request_stop == 0
+        ) {
             lift_request_stop = UP;
         }
     }, false);
 
     lift_etage_button_down.addEventListener('click', function () {
-        if (lift_stop_accepted == 0 && lift_request_stop == 0) {
+        if (
+            !(lift_state == LIFT_STATE_WAITING && lift_is_here) &&
+            lift_stop_accepted == 0 && lift_request_stop == 0
+        ) {
             lift_request_stop = DOWN;
         }
     }, false);
