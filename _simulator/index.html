@@ -282,10 +282,7 @@ function master () {
         } else {
             for (var i = 0; i < stops.length; i++) {
                 if (
-                    (
-                        lift_direction != 0 &&
-                        lift_direction != stops[i].direction
-                    ) || (
+                    lift_direction != stops[i].direction || (
                         Math.abs(lift_etage - stops[i].etage) >= Math.abs(lift_etage - stop.etage) &&
                         lift_direction == stop.direction
                     )
