@@ -21,6 +21,10 @@ a {
     color: #16c;
 }
 
+button::-moz-focus-inner {
+    border: 0;
+}
+
 .lift {
     position: relative;
     display: inline-flex;
@@ -127,7 +131,7 @@ a {
             <div class="lift-etage-gap"></div>
             <div class="lift-etage-controls">
                 <div id="lift-machine-etage-led" class="lift-etage-led"></div>
-                <input id="lift-machine-etage-number-input" type="text" class="lift-etage-number-input">
+                <input type="text" id="lift-machine-etage-number-input" class="lift-etage-number-input" maxlength="1" disabled>
             </div>
         </div>
 
@@ -288,9 +292,11 @@ function master () {
     lift_machine_etage_number_input.addEventListener('input', function () {
         if (lift_state == LIFT_STATE_WAITING) {
             var etage = parseInt(lift_machine_etage_number_input.value);
-            update_stops({ etage: etage, direction: etage > lift_etage ? UP : DOWN, reported: true, destination: true });
+            if (etage >= 0 && etage <= LIFT_ETAGES_COUNT) {
+                update_stops({ etage: etage, direction: etage > lift_etage ? UP : DOWN, reported: true, destination: true });
+                goto_top_etage();
+            }
             lift_machine_etage_number_input.value = '';
-            goto_top_etage();
         }
     }, false);
 
@@ -301,8 +307,12 @@ function master () {
             if (!lift_machine_etage_led.classList.contains('lift-etage-led-on')) {
                 lift_machine_etage_led.classList.add('lift-etage-led-on');
             }
+            if (lift_machine_etage_number_input.disabled) {
+                lift_machine_etage_number_input.disabled = false;
+            }
         } else {
             lift_machine_etage_led.classList.remove('lift-etage-led-on');
+            lift_machine_etage_number_input.disabled = true;
         }
 
         for (var i = 1; i <= LIFT_ETAGES_COUNT; i++) {
@@ -354,8 +364,8 @@ function slave (etage) {
     var lift_etage = 0;
     var lift_state = 0;
     var lift_is_here = false;
-    var lift_request_stop = 0;
     var lift_stop_accepted = 0;
+    var lift_request_stop = 0;
 
     var BLINK_TIME = 200;
     var BLINK_STATE_OFF = 0;
@@ -413,13 +423,13 @@ function slave (etage) {
     loop();
 
     lift_etage_button_up.addEventListener('click', function () {
-        if (lift_stop_accepted == 0) {
+        if (lift_stop_accepted == 0 && lift_request_stop == 0) {
             lift_request_stop = UP;
         }
     }, false);
 
     lift_etage_button_down.addEventListener('click', function () {
-        if (lift_stop_accepted == 0) {
+        if (lift_stop_accepted == 0 && lift_request_stop == 0) {
             lift_request_stop = DOWN;
         }
     }, false);
@@ -443,7 +453,6 @@ function slave (etage) {
             data[2] = lift_request_stop;
             if (lift_request_stop != 0) {
                 lift_request_stop = 0;
-                lift_stop_accepted = 0;
             }
             return data;
         }
