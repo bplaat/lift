@@ -242,6 +242,7 @@ function master () {
 
     function handle_stops_end () {
         lift_state = LIFT_STATE_STILL;
+        lift_direction = 0;
         if (stops.length > 0 && stops[0].etage == lift_etage) {
             if (stops[0].destination) {
                 stops.shift();
@@ -281,12 +282,13 @@ function master () {
         } else {
             for (var i = 0; i < stops.length; i++) {
                 if (
-                    Math.abs(lift_etage - stops[i].etage) >= Math.abs(lift_etage - stop.etage) &&
-                    lift_direction == stop.direction /*&&
                     (
-                        (lift_direction == UP && stop.etage > lift_etage) ||
-                        (lift_direction == DOWN && stop.etage < lift_etage)
-                    )*/
+                        lift_direction != 0 &&
+                        lift_direction != stops[i].direction
+                    ) || (
+                        Math.abs(lift_etage - stops[i].etage) >= Math.abs(lift_etage - stop.etage) &&
+                        lift_direction == stop.direction
+                    )
                 ) {
                     stops.splice(i, 0, stop);
                     if (i == 0 && lift_state != LIFT_STATE_WAITING) {
