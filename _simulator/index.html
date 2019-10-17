@@ -123,7 +123,7 @@ a {
     <div class="lift">
         <div id="lift-cabine" class="lift-cabine"></div>
 
-        <div class="lift-etage" style="background-color: violet;">
+        <div class="lift-etage" style="background-color: #ee82ee;">
             <div class="lift-etage-gap"></div>
             <div class="lift-etage-controls">
                 <div id="lift-machine-etage-led" class="lift-etage-led"></div>
@@ -131,7 +131,7 @@ a {
             </div>
         </div>
 
-        <div class="lift-etage" style="background-color: indigo;">
+        <div class="lift-etage" style="background-color: #4b0082;">
             <div class="lift-etage-gap"></div>
             <div class="lift-etage-controls">
                 <div id="lift-etage-6-digit-display" class="lift-etage-digit-display">6</div>
@@ -141,7 +141,7 @@ a {
             </div>
         </div>
 
-        <div class="lift-etage" style="background-color: blue;">
+        <div class="lift-etage" style="background-color: #0000ff;">
             <div class="lift-etage-gap"></div>
             <div class="lift-etage-controls">
                 <div id="lift-etage-5-digit-display" class="lift-etage-digit-display">5</div>
@@ -151,7 +151,7 @@ a {
             </div>
         </div>
 
-        <div class="lift-etage" style="background-color: green;">
+        <div class="lift-etage" style="background-color: #008000;">
             <div class="lift-etage-gap"></div>
             <div class="lift-etage-controls">
                 <div id="lift-etage-4-digit-display" class="lift-etage-digit-display">4</div>
@@ -161,7 +161,7 @@ a {
             </div>
         </div>
 
-        <div class="lift-etage" style="background-color: yellow;">
+        <div class="lift-etage" style="background-color: #ffff00;">
             <div class="lift-etage-gap"></div>
             <div class="lift-etage-controls">
                 <div id="lift-etage-3-digit-display" class="lift-etage-digit-display">3</div>
@@ -171,7 +171,7 @@ a {
             </div>
         </div>
 
-        <div class="lift-etage" style="background-color: orange;">
+        <div class="lift-etage" style="background-color: #ffa500;">
             <div class="lift-etage-gap"></div>
             <div class="lift-etage-controls">
                 <div id="lift-etage-2-digit-display" class="lift-etage-digit-display">2</div>
@@ -181,7 +181,7 @@ a {
             </div>
         </div>
 
-        <div class="lift-etage" style="background-color: red;">
+        <div class="lift-etage" style="background-color: #ff0000;">
             <div class="lift-etage-gap"></div>
             <div class="lift-etage-controls">
                 <div id="lift-etage-1-digit-display" class="lift-etage-digit-display">1</div>
@@ -219,36 +219,6 @@ function master () {
 
     var stops = [];
 
-    function update_stops (stop) {
-        if (stops.length == 0) {
-            stops.push(stop);
-            console.log('New', stops.slice(0));
-            goto_top_etage();
-        } else {
-            for (var i = 0; i < stops.length; i++) {
-                if (
-                    Math.abs(lift_etage - stops[i].etage) > Math.abs(lift_etage - stop.etage) &&
-                    lift_direction == stop.direction &&
-                    (
-                        (lift_direction == UP && stop.etage > lift_etage) ||
-                        (lift_direction == DOWN && stop.etage < lift_etage)
-                    )
-                ) {
-                    stops.splice(i, 0, stop);
-                    if (i == 0) {
-                        console.log('First', stops.slice(0));
-                        goto_top_etage();
-                    } else {
-                        console.log('Early', stops.slice(0));
-                    }
-                    return;
-                }
-            }
-            stops.push(stop);
-            console.log('Last', stops.slice(0));
-        }
-    }
-
     function handle_stops_end () {
         lift_state = LIFT_STATE_STILL;
         if (stops.length > 0 && stops[0].etage == lift_etage) {
@@ -280,12 +250,45 @@ function master () {
         }
     }
 
+    function update_stops (stop) {
+        if (stops.length == 0) {
+            stops.push(stop);
+            console.log('New', stops.slice(0));
+            if (lift_state != LIFT_STATE_WAITING)  {
+                goto_top_etage();
+            }
+        } else {
+            for (var i = 0; i < stops.length; i++) {
+                if (
+                    Math.abs(lift_etage - stops[i].etage) > Math.abs(lift_etage - stop.etage) &&
+                    lift_direction == stop.direction &&
+                    (
+                        (lift_direction == UP && stop.etage > lift_etage) ||
+                        (lift_direction == DOWN && stop.etage < lift_etage)
+                    )
+                ) {
+                    stops.splice(i, 0, stop);
+                    if (i == 0 && lift_state != LIFT_STATE_WAITING) {
+                        console.log('First', stops.slice(0));
+                        goto_top_etage();
+                    } else {
+                        console.log('Early', stops.slice(0));
+                    }
+                    return;
+                }
+            }
+            stops.push(stop);
+            console.log('Last', stops.slice(0));
+        }
+    }
+
     var lift_machine_etage_led = document.getElementById('lift-machine-etage-led');
     var lift_machine_etage_number_input = document.getElementById('lift-machine-etage-number-input');
     lift_machine_etage_number_input.value = '';
     lift_machine_etage_number_input.addEventListener('input', function () {
         if (lift_state == LIFT_STATE_WAITING) {
-            update_stops({ etage: parseInt(lift_machine_etage_number_input.value), direction: 0, reported: true, destination: true });
+            var etage = parseInt(lift_machine_etage_number_input.value);
+            update_stops({ etage: etage, direction: etage > lift_etage ? UP : DOWN, reported: true, destination: true });
             lift_machine_etage_number_input.value = '';
             goto_top_etage();
         }
@@ -295,7 +298,9 @@ function master () {
 
     function loop () {
         if (lift_state == LIFT_STATE_WAITING) {
-            lift_machine_etage_led.classList.add('lift-etage-led-on');
+            if (!lift_machine_etage_led.classList.contains('lift-etage-led-on')) {
+                lift_machine_etage_led.classList.add('lift-etage-led-on');
+            }
         } else {
             lift_machine_etage_led.classList.remove('lift-etage-led-on');
         }
@@ -359,8 +364,6 @@ function slave (etage) {
     var blink_time = Date.now();
 
     function loop () {
-        lift_etage_digit_display.textContent = lift_etage;
-
         var lift_cabine_center = lift_cabine.offsetTop + LIFT_CABINE_SIZE / 2;
         lift_is_here = lift_cabine_center > (LIFT_ETAGES_COUNT + 1 - etage) * LIFT_ETAGE_SIZE &&
             lift_cabine_center < (LIFT_ETAGES_COUNT + 2 - etage) * LIFT_ETAGE_SIZE;
@@ -375,25 +378,31 @@ function slave (etage) {
                 blink_time = Date.now();
             }
 
-            if (blink_state == BLINK_STATE_ON) {
+            if (blink_state == BLINK_STATE_ON && lift_etage_digit_display.textContent != lift_etage) {
                 lift_etage_digit_display.textContent = lift_etage;
-            } else {
+            } else if (lift_etage_digit_display.textContent != ' ') {
                 lift_etage_digit_display.textContent = ' ';
             }
-        } else {
+        } else if (lift_etage_digit_display.textContent != lift_etage) {
             lift_etage_digit_display.textContent = lift_etage;
         }
 
         if (lift_is_here) {
-            lift_etage_led.classList.add('lift-etage-led-on');
+            if (!lift_etage_led.classList.contains('lift-etage-led-on')) {
+                lift_etage_led.classList.add('lift-etage-led-on');
+            }
         } else {
             lift_etage_led.classList.remove('lift-etage-led-on');
         }
 
         if (lift_stop_accepted == UP) {
-            lift_etage_button_up.classList.add('lift-etage-button-up-on');
+            if (!lift_etage_button_up.classList.contains('lift-etage-button-up-on')) {
+                lift_etage_button_up.classList.add('lift-etage-button-up-on');
+            }
         } else if (lift_stop_accepted == DOWN) {
-            lift_etage_button_down.classList.add('lift-etage-button-down-on');
+            if (!lift_etage_button_down.classList.contains('lift-etage-button-down-on')) {
+                lift_etage_button_down.classList.add('lift-etage-button-down-on');
+            }
         } else {
             lift_etage_button_up.classList.remove('lift-etage-button-up-on');
             lift_etage_button_down.classList.remove('lift-etage-button-down-on');
