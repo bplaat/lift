@@ -1,6 +1,0 @@
-#define BASTIAAN_ETAGE 1
-#define DENIZ_ETAGE 2
-#define JACO_ETAGE 3
-#define LANGPEI_ETAGE 4
-#define MAHMOUD_ETAGE 5
-#define ROB_ETAGE 6
