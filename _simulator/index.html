@@ -389,8 +389,8 @@ function slave (etage) {
     var lift_etage = 0;
     var lift_state = 0;
     var lift_is_here = false;
-    var lift_stop_accepted = 0;
     var lift_request_stop = 0;
+    var lift_stop_accepted = 0;
 
     var BLINK_TIME = 200;
     var BLINK_STATE_OFF = 0;
@@ -470,11 +470,11 @@ function slave (etage) {
         onreceive: function (data) {
             lift_etage = data[0];
             lift_state = data[1];
-            if (lift_state == LIFT_STATE_WAITING && lift_is_here) {
-                lift_stop_accepted = 0;
-            }
             if (data[2] != 0) {
                 lift_stop_accepted = data[2];
+            }
+            if (lift_state == LIFT_STATE_WAITING && lift_is_here) {
+                lift_stop_accepted = 0;
             }
         },
         onrequest: function () {
