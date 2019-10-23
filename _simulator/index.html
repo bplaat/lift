@@ -142,7 +142,8 @@ button::-moz-focus-inner {
         <select id="lift-algorithm-input">
             <option value="0">Altijd aan het eind</option>
             <option value="1">Korste afstand eerst</option>
-            <option value="2" selected>Eindbesteming eerst</option>
+            <option value="2">Eindbesteming eerst</option>
+            <option value="3" selected>Zelfde richting eerst</option>
         </select>
     </p>
 
@@ -272,6 +273,31 @@ function master () {
                 return -1;
             }
             if (!a.end && b.end) {
+                return 1;
+            }
+            if (Math.abs(lift_etage - a.etage) < Math.abs(lift_etage - b.etage)) {
+                return -1;
+            }
+            if (Math.abs(lift_etage - a.etage) > Math.abs(lift_etage - b.etage)) {
+                return 1;
+            }
+            return 0;
+        },
+
+        // Shorter distance, end preference and same direction
+        function (a, b) {
+            if (a.direction != b.direction) {
+                if (a.end && !b.end) {
+                    return -1;
+                }
+                if (!a.end && b.end) {
+                    return 1;
+                }
+            }
+            if (a.direction == lift_direction && b.direction != lift_direction) {
+                return -1;
+            }
+            if (a.direction != lift_direction && b.direction == lift_direction) {
                 return 1;
             }
             if (Math.abs(lift_etage - a.etage) < Math.abs(lift_etage - b.etage)) {
