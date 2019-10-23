@@ -47,11 +47,9 @@ void digit_display_set_digit(uint8_t digit) {
 
 #define UP_BUTTON_PIN 10
 #define UP_LED_PIN 11
-uint8_t upButtonDown = 0;
 
 #define DOWN_BUTTON_PIN 12
 #define DOWN_LED_PIN 13
-uint8_t downButtonDown = 0;
 
 #define IR_SENSOR_PIN A0
 
@@ -125,32 +123,22 @@ void loop() {
 
   // Handle stop up button
   digitalWrite(UP_LED_PIN, lift_stop_accepted == UP);
-  if (digitalRead(UP_BUTTON_PIN) == LOW) {
-    if (
-      !upButtonDown &&
-      !(lift_state == LIFT_STATE_WAITING && lift_is_here) &&
-      lift_stop_accepted == 0 && lift_request_stop == 0
-    ) {
-      upButtonDown = 1;
-      lift_request_stop = UP;
-    }
-  } else {
-    upButtonDown = 0;
+  if (
+    digitalRead(UP_BUTTON_PIN) == LOW &&
+    !(lift_state == LIFT_STATE_WAITING && lift_is_here == 1) &&
+    lift_stop_accepted == 0 && lift_request_stop == 0
+  } {
+    lift_request_stop = UP;
   }
 
   // Handle stop down button
   digitalWrite(DOWN_LED_PIN, lift_stop_accepted == DOWN);
-  if (digitalRead(DOWN_BUTTON_PIN) == LOW) {
-    if (
-      !downButtonDown &&
-      !(lift_state == LIFT_STATE_WAITING && lift_is_here) &&
-      lift_stop_accepted == 0 && lift_request_stop == 0
-    ) {
-      downButtonDown = 1;
-      lift_request_stop = DOWN;
-    }
-  } else {
-    downButtonDown = 0;
+  if (
+    digitalRead(DOWN_BUTTON_PIN) == LOW &&
+    !(lift_state != LIFT_STATE_WAITING && lift_is_here == 1) &&
+    lift_stop_accepted == 0 && lift_request_stop == 0
+  ) {
+    lift_request_stop = DOWN;
   }
 }
 
@@ -176,7 +164,7 @@ void receiveEvent() {
       Serial.println(lift_stop_accepted);
     #endif
   }
-  if (lift_state == LIFT_STATE_WAITING && lift_is_here) {
+  if (lift_state == LIFT_STATE_WAITING && lift_is_here == 1) {
     lift_stop_accepted = 0;
   }
 }
