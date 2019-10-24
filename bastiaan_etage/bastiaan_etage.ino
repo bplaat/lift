@@ -9,8 +9,9 @@
 // Enable the DEBUG flag
 #define DEBUG
 
-// The etage address
+// The etage address and other protocol constants
 #define ETAGE_ADDRESS 1
+#define PROTOCOL_RECEIVE_MESSAGE_LENGTH 3
 
 // The pins for the digit display
 uint8_t digit_display_pins[7] = { 2, 3, 4, 5, 6, 7, 8 };
@@ -47,11 +48,9 @@ void digit_display_set_digit(uint8_t digit) {
 
 #define UP_BUTTON_PIN 10
 #define UP_LED_PIN 11
-uint8_t upButtonDown = 0;
 
 #define DOWN_BUTTON_PIN 12
 #define DOWN_LED_PIN 13
-uint8_t downButtonDown = 0;
 
 #define IR_SENSOR_PIN A0
 
@@ -75,6 +74,62 @@ int8_t lift_stop_accepted = 0;
 
 uint8_t blink_state = 0;
 uint32_t blink_time = millis();
+
+// On I2C receive read data
+void receiveEvent(int16_t num_bytes) {
+  if (num_bytes == PROTOCOL_RECEIVE_MESSAGE_LENGTH) {
+    lift_etage = Wire.read();
+    #ifdef DEBUG
+      Serial.print("-> lift_etage = ");
+      Serial.println(lift_etage);
+    #endif
+
+    lift_state = Wire.read();
+    #ifdef DEBUG
+      Serial.print("-> lift_state = ");
+      Serial.println(lift_state);
+    #endif
+
+    int8_t new_lift_stop_accepted = Wire.read();
+    if (new_lift_stop_accepted != 0) {
+      lift_stop_accepted = new_lift_stop_accepted;
+      #ifdef DEBUG
+        Serial.print("-> lift_stop_accepted = ");
+        Serial.println(lift_stop_accepted);
+      #endif
+    }
+    if (lift_state == LIFT_STATE_WAITING && lift_is_here == 1) {
+      lift_stop_accepted = 0;
+    }
+  } else {
+    #ifdef DEBUG
+      Serial.println("ERROR: Received wrong amount off bytes!");
+    #endif
+  }
+}
+
+// On I2C request write data
+void requestEvent() {
+  Wire.write(1);
+  #ifdef DEBUG
+    Serial.println("<- ping = 1");
+  #endif
+
+  Wire.write(lift_is_here);
+  #ifdef DEBUG
+    Serial.print("<- lift_is_here = ");
+    Serial.println(lift_is_here);
+  #endif
+
+  Wire.write(lift_request_stop);
+  #ifdef DEBUG
+    Serial.print("<- lift_request_stop = ");
+    Serial.println(lift_request_stop);
+  #endif
+  if (lift_request_stop != 0) {
+    lift_request_stop = 0;
+  }
+}
 
 void setup() {
   // When in debug mode is enabled init the serial communication
@@ -125,81 +180,21 @@ void loop() {
 
   // Handle stop up button
   digitalWrite(UP_LED_PIN, lift_stop_accepted == UP);
-  if (digitalRead(UP_BUTTON_PIN) == LOW) {
-    if (
-      !upButtonDown &&
-      !(lift_state == LIFT_STATE_WAITING && lift_is_here) &&
-      lift_stop_accepted == 0 && lift_request_stop == 0
-    ) {
-      upButtonDown = 1;
-      lift_request_stop = UP;
-    }
-  } else {
-    upButtonDown = 0;
+  if (
+    digitalRead(UP_BUTTON_PIN) == LOW &&
+    !(lift_state == LIFT_STATE_WAITING && lift_is_here == 1) &&
+    lift_stop_accepted == 0 && lift_request_stop == 0
+  ) {
+    lift_request_stop = UP;
   }
 
   // Handle stop down button
   digitalWrite(DOWN_LED_PIN, lift_stop_accepted == DOWN);
-  if (digitalRead(DOWN_BUTTON_PIN) == LOW) {
-    if (
-      !downButtonDown &&
-      !(lift_state == LIFT_STATE_WAITING && lift_is_here) &&
-      lift_stop_accepted == 0 && lift_request_stop == 0
-    ) {
-      downButtonDown = 1;
-      lift_request_stop = DOWN;
-    }
-  } else {
-    downButtonDown = 0;
-  }
-}
-
-// On I2C receive read data
-void receiveEvent() {
-  lift_etage = Wire.read();
-  #ifdef DEBUG
-    Serial.print("-> lift_etage = ");
-    Serial.println(lift_etage);
-  #endif
-
-  lift_state = Wire.read();
-  #ifdef DEBUG
-    Serial.print("-> lift_state = ");
-    Serial.println(lift_state);
-  #endif
-
-  int8_t new_lift_stop_accepted = Wire.read();
-  if (new_lift_stop_accepted != 0) {
-    lift_stop_accepted = new_lift_stop_accepted;
-    #ifdef DEBUG
-      Serial.print("-> lift_stop_accepted = ");
-      Serial.println(lift_stop_accepted);
-    #endif
-  }
-  if (lift_state == LIFT_STATE_WAITING && lift_is_here) {
-    lift_stop_accepted = 0;
-  }
-}
-
-// On I2C request write data
-void requestEvent() {
-  Wire.write(1);
-  #ifdef DEBUG
-    Serial.println("<- ping = 1");
-  #endif
-
-  Wire.write(lift_is_here);
-  #ifdef DEBUG
-    Serial.print("<- lift_is_here = ");
-    Serial.println(lift_is_here);
-  #endif
-
-  Wire.write(lift_request_stop);
-  #ifdef DEBUG
-    Serial.print("<- lift_request_stop = ");
-    Serial.println(lift_request_stop);
-  #endif
-  if (lift_request_stop != 0) {
-    lift_request_stop = 0;
+  if (
+    digitalRead(DOWN_BUTTON_PIN) == LOW &&
+    !(lift_state != LIFT_STATE_WAITING && lift_is_here == 1) &&
+    lift_stop_accepted == 0 && lift_request_stop == 0
+  ) {
+    lift_request_stop = DOWN;
   }
 }

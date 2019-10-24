@@ -28,15 +28,17 @@ uint8_t lift_state = LIFT_STATE_STILL;
 typedef struct Stop {
   uint8_t etage;
   int8_t direction;
-  uint8_t destination;
+  uint8_t begin;
+  uint8_t end;
   uint8_t reported;
 } Stop;
 
-Stop *stop_new(uint8_t etage, int8_t direction, uint8_t destination, uint8_t reported) {
+Stop *stop_new(uint8_t etage, int8_t direction, uint8_t begin, uint8_t end, uint8_t reported) {
   Stop *stop = (Stop *)malloc(sizeof(Stop));
   stop->etage = etage;
   stop->direction = direction;
-  stop->destination = destination;
+  stop->begin = begin;
+  stop->end = end;
   stop->reported = reported;
   return stop;
 }
