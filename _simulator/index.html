@@ -252,6 +252,13 @@ function master () {
     var stops = new Array(STOPS_MAX_LENGTH);
     var stops_length = 0;
 
+    function stops_shift () {
+        for (var i = 1; i < stops_length; i++) {
+            stops[i - 1] = stops[i];
+        }
+        stops[--stops_length] = undefined;
+    }
+
     var lift_algorithms = [
         // Always push
         function (a, b) {
@@ -312,7 +319,7 @@ function master () {
         }
     ];
 
-    var WAIT_TIME = 1000;
+    var WAIT_TIME = 1500;
     var WAIT_STATE_OFF = 0;
     var WAIT_STATE_ON = 1;
     var wait_state = 0;
@@ -329,18 +336,12 @@ function master () {
     function handle_stops_end () {
         lift_state = LIFT_STATE_STILL;
         if (stops_length > 0) {
-            if (stops[0].end && !stops[0].begin) {
-                for (var i = 1; i < stops_length; i++) {
-                    stops[i - 1] = stops[i];
-                }
-                stops[--stops_length] = undefined;
+            if (!stops[0].begin && stops[0].end) {
+                stops_shift();
                 wait_state = WAIT_STATE_ON;
                 wait_time = Date.now();
             } else {
-                for (var i = 1; i < stops_length; i++) {
-                    stops[i - 1] = stops[i];
-                }
-                stops[--stops_length] = undefined;
+                stops_shift();
                 lift_state = LIFT_STATE_WAITING;
                 console.log('Begin: ' + JSON.stringify(stops));
             }
@@ -366,14 +367,17 @@ function master () {
                     stops[i].direction = direction;
                     stops[i].begin = true;
                     stops[i].reported = false;
+                } else {
+                    stops[i].end = true;
                 }
-                if (end) stops[i].end = true;
                 break;
             }
         }
+
         if (!already_stop) {
             stops[stops_length++] = { etage: etage, direction: direction, begin: !end, end: end, reported: end };
         }
+
         stops.sort(lift_algorithms[lift_algorithm_input.value]);
         console.log('Add: ' + JSON.stringify(stops));
     }

@@ -98,7 +98,7 @@ void receiveEvent(int16_t num_bytes) {
         Serial.println(lift_stop_accepted);
       #endif
     }
-    if (lift_state == LIFT_STATE_WAITING && lift_is_here == 1) {
+    if (lift_state == LIFT_STATE_WAITING && lift_is_here) {
       lift_stop_accepted = 0;
     }
   } else {
@@ -182,7 +182,7 @@ void loop() {
   digitalWrite(UP_LED_PIN, lift_stop_accepted == UP);
   if (
     digitalRead(UP_BUTTON_PIN) == LOW &&
-    !(lift_state == LIFT_STATE_WAITING && lift_is_here == 1) &&
+    !(lift_state == LIFT_STATE_WAITING && lift_is_here) &&
     lift_stop_accepted == 0 && lift_request_stop == 0
   ) {
     lift_request_stop = UP;
@@ -192,7 +192,7 @@ void loop() {
   digitalWrite(DOWN_LED_PIN, lift_stop_accepted == DOWN);
   if (
     digitalRead(DOWN_BUTTON_PIN) == LOW &&
-    !(lift_state != LIFT_STATE_WAITING && lift_is_here == 1) &&
+    !(lift_state != LIFT_STATE_WAITING && lift_is_here) &&
     lift_stop_accepted == 0 && lift_request_stop == 0
   ) {
     lift_request_stop = DOWN;
