@@ -1,28 +1,21 @@
-// Deniz Kahriman 0984809
-// ----------------------
+// ------------------------
+// Deniz Kahriman 0984809 -
+// ------------------------
 
 #include <Wire.h>
-#include <stdint.h>
-#include <Arduino.h>
 
 #define DENIZ_ETAGE 2
-#define stopForDown -1
-#define noStop 0
-#define stopForUp 1
-
-int liftSendStop = 0;
-int liftHere = 0;
 
 // led's
-int whiteLed = 6; // led up button
-int redLed = 4;  // led down button
-int ledPin = 7; // led here
+int whiteLed = 5; // led up button
+int redLed = 3;   // led down button
+int ledPin = 7;   // led for here
 
 // buttons
-bool buttonUpPress = false;    // button up input
-bool buttonDownPress = false; // button down input
-int buttonPinUp = 5;
-int buttonPinDown = 3;
+bool buttonUpPress = false;
+bool buttonDownPress = false;
+int buttonPinUp = 4;
+int buttonPinDown = 2;
 int buttonStateUp = 0;
 int buttonStateDown = 0;
 int lastStateUp = 0;
@@ -31,12 +24,12 @@ int lastStateDown = 0;
 // reed
 int reedSwitchPin = 8; // reed sensor pin connected to
 
-
 // shiftout
-#define clockPin 10   // pin connected to SRCLK of 74HC595 
+#define clockPin 10  // pin connected to SRCLK of 74HC595 
 #define dataPin 11   // pin connected to SER of 74HC595 
-#define latchPin 12 // pin connected to RCLK of 74HC595
+#define latchPin 12  // pin connected to RCLK of 74HC595
 
+// 7 segment display
 const byte datArray[] = {
   B01111110,  // 0
   B00001100,  // 1
@@ -51,21 +44,33 @@ const byte datArray[] = {
 };
 
 // i2c
-byte receiveEtage = 0;
-byte receiveDirection = 0;
-byte receiveStop = 0;
-byte sendStop = 0;
+int liftEtage = 0;
+int liftState = 0;
+int liftHere = 0;
+int liftStop = 0;
+int liftStopAccepted = 0;
 
+#define liftNotMoving 0
+#define liftMoving 1
+#define liftWaiting 2
+
+#define noStop 0
+#define stopForUp -1
+#define stopForDown 1
+
+// blink display
+bool blinkState = false;
+long blinkTime = millis();
 
 void setup() {
-
+  // setup i2c
   Serial.begin(9600);
-
+  Serial.println("Deniz etage online");
   Wire.begin(DENIZ_ETAGE);  //join i2c bus with address 2
   Wire.onReceive(receiveEvent);
   Wire.onRequest(requestEvent);
-  Serial.println("Deniz etage online");
 
+  // all the lift parts
   pinMode(whiteLed, OUTPUT);
   pinMode(redLed, OUTPUT);
   pinMode(buttonPinUp, INPUT_PULLUP);
@@ -76,91 +81,95 @@ void setup() {
   pinMode(clockPin, OUTPUT);
   pinMode(dataPin, OUTPUT);
 
+  // begin with leds off
   digitalWrite(redLed, LOW);
   digitalWrite(whiteLed, LOW);
   digitalWrite(ledPin, LOW);
-
 }
 
+// function for 7 segment display
 void writeDigit(int i) {
   digitalWrite(latchPin, LOW); // latchPin low for duration of transmission
   shiftOut(dataPin, clockPin, MSBFIRST, datArray[i]); // send data
   digitalWrite(latchPin, HIGH); // latchPin high to save the data
 }
 
-
 void loop() {
-
-  buttonStateUp = digitalRead(buttonPinUp);
-
-  if (buttonStateUp != lastStateUp) {
-    if (buttonStateUp == LOW) {
-      buttonUpPress = true;
-      liftSendStop = stopForUp;
-      Serial.println("Up");
-      digitalWrite(whiteLed, HIGH);
-      Serial.println("White led on");
-    } else {
-      Serial.println("white led off");
-    }
-    delay(50);
-  }
-  lastStateUp = buttonStateUp;
-
-
-
-  buttonStateDown = digitalRead(buttonPinDown);
-
-  if (buttonStateDown != lastStateDown) {
-    if (buttonStateDown == LOW) {
-      buttonDownPress = true;
-      liftSendStop = stopForDown;
-      Serial.println("Down");
-      Serial.println("Red led on");
-      digitalWrite(redLed, HIGH);
-    } else {
-      Serial.println("Red led off");
-    }
-    delay(50);
-  }
-  lastStateDown = buttonStateDown;
-  
-
-
-
+  // check if lift is here
   liftHere = digitalRead(reedSwitchPin);
 
   if (liftHere == HIGH) {
     Serial.println("Reed active");
     Serial.println("Led for here on");
+    liftHere = 1;
     writeDigit(2);
     digitalWrite(ledPin, HIGH);
     digitalWrite(whiteLed, LOW);
     digitalWrite(redLed, LOW);
   } else {
     digitalWrite(ledPin, LOW);
-    writeDigit(receiveEtage);
+    writeDigit(liftEtage);
   }
- 
 
+  // if lift is moving blink display
+  if (liftState == liftMoving) {
+  }
+  else if (blinkState == false) {
+    if (blinkTime + 100 < millis()) {
+      blinkState = true;
+      blinkTime = millis();
+    }
+  }
+  else if (blinkState == true) {
+    if (blinkTime + 100 < millis()) {
+      blinkState = false;
+      blinkTime = millis();
+    }
+  }
 
-  
+  // button for stop up
+  buttonStateUp = digitalRead(buttonPinUp);
+  if (buttonStateUp != lastStateUp) {
+    if (buttonStateUp == LOW) {
+      buttonUpPress = true;
+      liftStop = stopForUp;
+      Serial.println("Up pressed");
+      digitalWrite(whiteLed, HIGH);
+      Serial.println("White led on");
+    } else {
+      Serial.println("Up not pressed");
+    }
+    delay(50);
+  }
+  lastStateUp = buttonStateUp;
+
+  // button for stop down
+  buttonStateDown = digitalRead(buttonPinDown);
+  if (buttonStateDown != lastStateDown) {
+    if (buttonStateDown == LOW) {
+      buttonDownPress = true;
+      liftStop = stopForDown;
+      Serial.println("Down pressed");
+      digitalWrite(redLed, HIGH);
+      Serial.println("Red led on");
+    } else {
+      Serial.println("Down not pressed");
+    }
+    delay(50);
+  }
+  lastStateDown = buttonStateDown;
 }
 
 void receiveEvent() {
-
   Serial.println("receive");
-  receiveEtage = Wire.read();
-  receiveDirection = Wire.read();
-  receiveStop = Wire.read();
-
+  liftEtage = Wire.read();
+  liftState = Wire.read();
+  liftStopAccepted = Wire.read();
 }
 
 void requestEvent() {
-
   Serial.println("request");
-  Wire.write(1);
+  Wire.write(2);
   Wire.write(liftHere);
-  Wire.write(sendStop);
-
+  Wire.write(liftStop);
 }
