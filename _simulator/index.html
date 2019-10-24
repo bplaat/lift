@@ -247,8 +247,10 @@ var slaves = [];
 function master () {
     var lift_etage = 0;
     var lift_state = LIFT_STATE_STILL;
-    var lift_direction = 0;
+
+    var STOPS_MAX_LENGTH = 20;
     var stops = [];
+    var stops_length = 0;
 
     var lift_algorithms = [
         // Always push
@@ -294,10 +296,10 @@ function master () {
                     return 1;
                 }
             }
-            if (a.direction == lift_direction && b.direction != lift_direction) {
+            if (a.direction == stops[0].direction && b.direction != stops[0].direction) {
                 return -1;
             }
-            if (a.direction != lift_direction && b.direction == lift_direction) {
+            if (a.direction != stops[0].direction && b.direction == stops[0].direction) {
                 return 1;
             }
             if (Math.abs(lift_etage - a.etage) < Math.abs(lift_etage - b.etage)) {
@@ -320,12 +322,14 @@ function master () {
 
     function handle_stops_end () {
         lift_state = LIFT_STATE_STILL;
-        lift_direction = 0;
-        if (stops.length > 0) {
+        if (stops_length > 0) {
             if (stops[0].end && !stops[0].begin) {
-                stops.shift();
+                for (var i = 1; i < stops_length; i++) {
+                    stops[i - 1] = stops[i];
+                }
+                stops[--stops_length] = undefined;
                 setTimeout(function () {
-                    if (stops.length > 0) {
+                    if (stops_length > 0) {
                         stops.sort(lift_algorithms[lift_algorithm_input.value]);
                         console.log('End: ' + JSON.stringify(stops));
                         goto_first_stop();
@@ -334,7 +338,10 @@ function master () {
                     }
                 }, 1000);
             } else {
-                stops.shift();
+                for (var i = 1; i < stops_length; i++) {
+                    stops[i - 1] = stops[i];
+                }
+                stops[--stops_length] = undefined;
                 lift_state = LIFT_STATE_WAITING;
                 console.log('Begin: ' + JSON.stringify(stops));
             }
@@ -343,19 +350,17 @@ function master () {
 
     function goto_first_stop() {
         lift_state = LIFT_STATE_MOVING;
-        lift_direction = stops[0].direction;
-
-        var top = (LIFT_CABINE_TOP + (LIFT_ETAGES_COUNT + 1 - stops[0].etage) * LIFT_ETAGE_SIZE);
-        if (top != parseInt(lift_cabine.style.top)) {
-            lift_cabine.style.top = top + 'px';
-        } else {
-            handle_stops_end();
-        }
+        lift_cabine.style.top = (LIFT_CABINE_TOP + (LIFT_ETAGES_COUNT + 1 - stops[0].etage) * LIFT_ETAGE_SIZE) + 'px';
     }
 
     function update_stops (etage, direction, end) {
+        if (stops_length >= STOPS_MAX_LENGTH) {
+            alert('ERROR: Max stops length!');
+            return;
+        }
+
         var already_stop = false;
-        for (var i = 0; i < stops.length; i++) {
+        for (var i = 0; i < stops_length; i++) {
             if (stops[i].etage == etage) {
                 already_stop = true;
                 if (!end) {
@@ -368,7 +373,7 @@ function master () {
             }
         }
         if (!already_stop) {
-            stops.push({ etage: etage, direction: direction, begin: !end, end: end, reported: end });
+            stops[stops_length++] = { etage: etage, direction: direction, begin: !end, end: end, reported: end };
         }
         stops.sort(lift_algorithms[lift_algorithm_input.value]);
         console.log('Add: ' + JSON.stringify(stops));
@@ -379,7 +384,7 @@ function master () {
     lift_machine_etage_number_input.value = '';
     lift_machine_etage_number_input.addEventListener('input', function () {
         if (lift_state == LIFT_STATE_WAITING) {
-            var etage = parseInt(lift_machine_etage_number_input.value);
+            var etage = Number(lift_machine_etage_number_input.value);
             if (etage >= 0 && etage <= LIFT_ETAGES_COUNT && etage != lift_etage) {
                 update_stops(etage, etage > lift_etage ? UP : DOWN, true);
                 goto_first_stop();
@@ -413,7 +418,7 @@ function master () {
             }
 
             var lift_stop_accepted = 0;
-            for (var j = 0; j < stops.length; j++) {
+            for (var j = 0; j < stops_length; j++) {
                 if (stops[j].etage == i && !stops[j].reported) {
                     lift_stop_accepted = stops[j].direction;
                     stops[j].reported = true;
