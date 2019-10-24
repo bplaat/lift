@@ -249,7 +249,7 @@ function master () {
     var lift_state = LIFT_STATE_STILL;
 
     var STOPS_MAX_LENGTH = 20;
-    var stops = [];
+    var stops = new Array(STOPS_MAX_LENGTH);
     var stops_length = 0;
 
     var lift_algorithms = [
@@ -312,6 +312,12 @@ function master () {
         }
     ];
 
+    var WAIT_TIME = 1000;
+    var WAIT_STATE_OFF = 0;
+    var WAIT_STATE_ON = 1;
+    var wait_state = 0;
+    var wait_time = 0;
+
     var lift_algorithm_input = document.getElementById('lift-algorithm-input');
     if (localStorage.lift_algorithm_input != undefined) {
         lift_algorithm_input.value = localStorage.lift_algorithm_input;
@@ -328,15 +334,8 @@ function master () {
                     stops[i - 1] = stops[i];
                 }
                 stops[--stops_length] = undefined;
-                setTimeout(function () {
-                    if (stops_length > 0) {
-                        stops.sort(lift_algorithms[lift_algorithm_input.value]);
-                        console.log('End: ' + JSON.stringify(stops));
-                        goto_first_stop();
-                    } else {
-                        console.log('End: []');
-                    }
-                }, 1000);
+                wait_state = WAIT_STATE_ON;
+                wait_time = Date.now();
             } else {
                 for (var i = 1; i < stops_length; i++) {
                     stops[i - 1] = stops[i];
@@ -396,6 +395,15 @@ function master () {
     lift_cabine.addEventListener('transitionend', handle_stops_end, false);
 
     function loop () {
+        if (wait_state == WAIT_STATE_ON && Date.now() - wait_time > WAIT_TIME) {
+            wait_state = WAIT_STATE_OFF;
+            if (stops_length > 0) {
+                stops.sort(lift_algorithms[lift_algorithm_input.value]);
+                goto_first_stop();
+            }
+            console.log('End: ' + JSON.stringify(stops));
+        }
+
         if (lift_state == LIFT_STATE_WAITING) {
             if (!lift_machine_etage_led.classList.contains('lift-etage-led-on')) {
                 lift_machine_etage_led.classList.add('lift-etage-led-on');
