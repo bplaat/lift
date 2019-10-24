@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <Arduino.h>
 
-#define TEST
+//#define TEST
 
 #define LED 9
 #define BUTTON_DOWN A0
@@ -52,6 +52,8 @@ void setup_IO()
     pinMode(latchPin, OUTPUT);
     pinMode(clockPin, OUTPUT);
     pinMode(dataPin, OUTPUT);
+    digitalWrite(BUTTON_UP_LED, LOW);
+    digitalWrite(BUTTON_DOWN_LED, LOW);
 }
 
 void setup()
@@ -82,14 +84,13 @@ void setup()
 
 void loop()
 {
-    //writeDigit(recieved_floor);
     set_display(recieved_floor);
-    if (digitalRead(BUTTON_DOWN))
+    if (!digitalRead(BUTTON_DOWN))
     {
         send_stop = STOP_FOR_DOWN;
-        //    Serial.println("down-button pressd");
+        Serial.println("down-button pressed");
     }
-    else if (digitalRead(BUTTON_UP))
+    else if (!digitalRead(BUTTON_UP))
     {
         send_stop = STOP_FOR_UP;
         Serial.println("up-button pressed");
@@ -99,17 +100,41 @@ void loop()
         send_stop = NO_STOP_NEEDED;
         //Serial.println("no stop needed");
     }
-    send_is_lift_here = digitalRead(REED);
+    send_is_lift_here = !digitalRead(REED);
     //Serial.println("lift is: " + send_is_lift_here);
 
     digitalWrite(LED, send_is_lift_here);
-    Serial.println(recieved_floor);
-    if (recieved_stop_accepted == STOP_FOR_DOWN_ACCEPTED)
+    static uint8_t previous_recieved_floor;
+    if (recieved_floor != previous_recieved_floor)
+    {
+        previous_recieved_floor = recieved_floor;
+        Serial.print("recieved_floor: ");
+        Serial.println(recieved_floor);
+    }
+
+    if (recieved_stop_accepted_for_down)
     {
         digitalWrite(BUTTON_DOWN_LED, LOW);
     }
-    if (recieved_stop_accepted == STOP_FOR_UP_ACCEPTED)
+    else
+    {
+        digitalWrite(BUTTON_DOWN_LED, HIGH);
+    }
+
+    if (recieved_stop_accepted_for_up)
     {
         digitalWrite(BUTTON_UP_LED, LOW);
+        Serial.println("stop for up accepted");
+    }
+    else
+    {
+        digitalWrite(BUTTON_UP_LED, HIGH);
+        //Serial.println("checking");
+    }
+
+    if (recieved_action == WAITING && !digitalRead(REED))
+    {
+        recieved_stop_accepted_for_down = 0;
+        recieved_stop_accepted_for_up = 0;
     }
 }
