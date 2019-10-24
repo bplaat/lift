@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>De Lift Simulator</title>
+    <title>The Lift Simulator</title>
     <style>
 body, select, input, button {
     font-family: sans-serif;
@@ -135,14 +135,14 @@ button::-moz-focus-inner {
     </style>
 </head>
 <body>
-    <h1>De Lift Simulator</h1>
+    <h1>The Lift Simulator</h1>
 
     <p>
-        Algoritme:
+        Lift algorithm:
         <select id="lift-algorithm-input">
-            <option value="0">Altijd aan het eind</option>
-            <option value="1">Korste afstand eerst</option>
-            <option value="2">Eindbesteming eerst</option>
+            <option value="0">Always at the end</option>
+            <option value="1">Shortest distance first</option>
+            <option value="2">Final destination first</option>
             <option value="3" selected>Zelfde richting eerst</option>
         </select>
     </p>
@@ -221,7 +221,7 @@ button::-moz-focus-inner {
         </div>
     </div>
 
-    <p>Gemaakt door <a href="https://bastiaan.ml/" target="_blank">Bastiaan van der Plaat</a></p>
+    <p>Made by <a href="https://bastiaan.ml/" target="_blank">Bastiaan van der Plaat</a></p>
 
     <script>
 function rand (min, max) {

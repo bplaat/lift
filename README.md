@@ -1,2 +1,3 @@
-# lift
-TI1E - Project 1 - Technische Infromatica - Groep 3
+# Technische Infromatica - Project 1 (The Lift) - Group 3
+
+https://lift-simulator.netlify.com/
