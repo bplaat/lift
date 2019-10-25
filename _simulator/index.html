@@ -349,8 +349,13 @@ function master () {
     }
 
     function goto_first_stop() {
-        lift_state = LIFT_STATE_MOVING;
-        lift_cabine.style.top = (LIFT_CABINE_TOP + (LIFT_ETAGES_COUNT + 1 - stops[0].etage) * LIFT_ETAGE_SIZE) + 'px';
+        var top = LIFT_CABINE_TOP + (LIFT_ETAGES_COUNT + 1 - stops[0].etage) * LIFT_ETAGE_SIZE;
+        if (top != lift_cabine.offsetTop) {
+            lift_state = LIFT_STATE_MOVING;
+            lift_cabine.style.top = top + 'px';
+        } else {
+            handle_stops_end();
+        }
     }
 
     function update_stops (etage, direction, end) {
