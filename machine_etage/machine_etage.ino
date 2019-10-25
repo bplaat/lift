@@ -186,7 +186,7 @@ void loop() {
   // If lift state is waiting get pressed key check if it's a good key and add stop
   if (lift_state == LIFT_STATE_WAITING) {
     uint8_t etage = keypad.getKey() - '0';
-    if (etage <= LIFT_ETAGES_COUNT && etage != lift_etage) {
+    if (etage >= 1 && etage <= LIFT_ETAGES_COUNT && etage != lift_etage) {
       update_stops(etage, etage > lift_etage ? UP : DOWN, true);
       goto_first_stop();
     }

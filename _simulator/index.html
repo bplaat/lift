@@ -388,7 +388,7 @@ function master () {
     lift_machine_etage_number_input.addEventListener('input', function () {
         if (lift_state == LIFT_STATE_WAITING) {
             var etage = Number(lift_machine_etage_number_input.value);
-            if (etage >= 0 && etage <= LIFT_ETAGES_COUNT && etage != lift_etage) {
+            if (etage >= 1 && etage <= LIFT_ETAGES_COUNT && etage != lift_etage) {
                 update_stops(etage, etage > lift_etage ? UP : DOWN, true);
                 goto_first_stop();
             }
