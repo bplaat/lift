@@ -14,9 +14,11 @@ int ledPin = 7;   // led for here
 // buttons
 bool buttonUpPress = false;
 bool buttonDownPress = false;
+
 int buttonPinUp = 4;
 int buttonPinDown = 2;
 int buttonStateUp = 0;
+
 int buttonStateDown = 0;
 int lastStateUp = 0;
 int lastStateDown = 0;
