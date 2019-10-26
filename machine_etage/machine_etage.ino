@@ -186,7 +186,7 @@ void loop() {
   // If lift state is waiting get pressed key check if it's a good key and add stop
   if (lift_state == LIFT_STATE_WAITING) {
     uint8_t etage = keypad.getKey() - '0';
-    if (etage >= 0 && etage <= LIFT_ETAGES_COUNT && etage != lift_etage) {
+    if (etage >= 1 && etage <= LIFT_ETAGES_COUNT && etage != lift_etage) {
       update_stops(etage, etage > lift_etage ? UP : DOWN, true);
       goto_first_stop();
     }
@@ -203,10 +203,19 @@ void loop() {
   // Loop over all the etages and send and receive information
   for (uint8_t etage = 1; etage <= LIFT_ETAGES_COUNT; etage++) {
     // Send the information conform protocol
+    uint8_t lift_stop_accepted = 0;
+    for (uint8_t i = 0; i < stops_length; i++) {
+      if (stops[i]->etage == etage && !stops[i]->reported) {
+        lift_stop_accepted = stops[i]->direction;
+        stops[i]->reported = 1;
+        break;
+      }
+    }
+
     Wire.beginTransmission(etage);
     Wire.write(lift_etage);
     Wire.write(lift_state);
-    Wire.write(0);
+    Wire.write(lift_stop_accepted);
     Wire.endTransmission();
 
     // Request other information conform protocol

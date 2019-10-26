@@ -349,8 +349,13 @@ function master () {
     }
 
     function goto_first_stop() {
-        lift_state = LIFT_STATE_MOVING;
-        lift_cabine.style.top = (LIFT_CABINE_TOP + (LIFT_ETAGES_COUNT + 1 - stops[0].etage) * LIFT_ETAGE_SIZE) + 'px';
+        var top = LIFT_CABINE_TOP + (LIFT_ETAGES_COUNT + 1 - stops[0].etage) * LIFT_ETAGE_SIZE;
+        if (top != lift_cabine.offsetTop) {
+            lift_state = LIFT_STATE_MOVING;
+            lift_cabine.style.top = top + 'px';
+        } else {
+            handle_stops_end();
+        }
     }
 
     function update_stops (etage, direction, end) {
@@ -388,7 +393,7 @@ function master () {
     lift_machine_etage_number_input.addEventListener('input', function () {
         if (lift_state == LIFT_STATE_WAITING) {
             var etage = Number(lift_machine_etage_number_input.value);
-            if (etage >= 0 && etage <= LIFT_ETAGES_COUNT && etage != lift_etage) {
+            if (etage >= 1 && etage <= LIFT_ETAGES_COUNT && etage != lift_etage) {
                 update_stops(etage, etage > lift_etage ? UP : DOWN, true);
                 goto_first_stop();
             }
@@ -420,20 +425,20 @@ function master () {
             lift_machine_etage_number_input.disabled = true;
         }
 
-        for (var i = 1; i <= LIFT_ETAGES_COUNT; i++) {
+        for (var etage = 1; etage <= LIFT_ETAGES_COUNT; etage++) {
             var slave;
-            for (var j = 0; j < slaves.length; j++) {
-                if (slaves[j].etage == i) {
-                    slave = slaves[j];
+            for (var i = 0; i < slaves.length; i++) {
+                if (slaves[i].etage == etage) {
+                    slave = slaves[i];
                     break;
                 }
             }
 
             var lift_stop_accepted = 0;
-            for (var j = 0; j < stops_length; j++) {
-                if (stops[j].etage == i && !stops[j].reported) {
-                    lift_stop_accepted = stops[j].direction;
-                    stops[j].reported = true;
+            for (var i = 0; i < stops_length; i++) {
+                if (stops[i].etage == etage && !stops[i].reported) {
+                    lift_stop_accepted = stops[i].direction;
+                    stops[i].reported = true;
                     break;
                 }
             }
@@ -444,13 +449,13 @@ function master () {
 
             var lift_is_here = data[1];
             if (lift_is_here == 1) {
-                lift_etage = i;
+                lift_etage = etage;
             }
 
             var lift_request_stop = data[2];
             if (lift_request_stop != 0) {
-                update_stops(i, lift_request_stop, false);
-                if (stops[0].etage == i && lift_state != LIFT_STATE_WAITING) {
+                update_stops(etage, lift_request_stop, false);
+                if (stops[0].etage == etage && lift_state != LIFT_STATE_WAITING) {
                     goto_first_stop();
                 }
             }
