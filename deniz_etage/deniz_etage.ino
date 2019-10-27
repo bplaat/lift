@@ -6,6 +6,8 @@
 
 #define DENIZ_ETAGE 2
 
+#define ANSWERSIZE 5
+
 // led's
 int whiteLed = 5; // led up button
 int redLed = 3;   // led down button
@@ -96,6 +98,22 @@ void writeDigit(int i) {
   digitalWrite(latchPin, HIGH); // latchPin high to save the data
 }
 
+// 
+void receiveEvent() {
+  Serial.println("receive");
+  liftEtage = Wire.read();
+  liftState = Wire.read();
+  liftStopAccepted = Wire.read();
+}
+
+//
+void requestEvent() {
+  Serial.println("request");
+  Wire.write(2);
+  Wire.write(liftHere);
+  Wire.write(liftStop);
+}
+
 void loop() {
   // check if lift is here
   liftHere = digitalRead(reedSwitchPin);
@@ -160,18 +178,4 @@ void loop() {
     delay(50);
   }
   lastStateDown = buttonStateDown;
-}
-
-void receiveEvent() {
-  Serial.println("receive");
-  liftEtage = Wire.read();
-  liftState = Wire.read();
-  liftStopAccepted = Wire.read();
-}
-
-void requestEvent() {
-  Serial.println("request");
-  Wire.write(2);
-  Wire.write(liftHere);
-  Wire.write(liftStop);
 }
