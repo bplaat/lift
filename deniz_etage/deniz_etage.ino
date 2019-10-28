@@ -98,12 +98,27 @@ void writeDigit(int i) {
   digitalWrite(latchPin, HIGH); // latchPin high to save the data
 }
 
-// 
+//
 void receiveEvent() {
   Serial.println("receive");
   liftEtage = Wire.read();
   liftState = Wire.read();
   liftStopAccepted = Wire.read();
+
+  while (0 < Wire.available()) {
+    byte x = Wire.read();
+  }
+
+  int newLiftStopAccepted = Wire.read();
+  if (newLiftStopAccepted != 0) {
+    liftStopAccepted = newLiftStopAccepted;
+
+    if (liftState == liftWaiting && liftHere) {
+      liftStopAccepted = 0;
+    } else {
+      Serial.println("Error");
+    }
+  }
 }
 
 //
@@ -112,6 +127,10 @@ void requestEvent() {
   Wire.write(2);
   Wire.write(liftHere);
   Wire.write(liftStop);
+
+  if (liftStop != 0) {
+    liftStop = 0;
+  }
 }
 
 void loop() {

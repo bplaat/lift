@@ -44,6 +44,10 @@ uint8_t lift_state = LIFT_STATE_STILL;
 // Lift input led pins
 #define LED_PIN 10
 
+// DC motor pin
+#define ENABLE_PIN 11
+#define DIRECTION_PIN 12
+
 // The stop struct
 typedef struct Stop {
   uint8_t etage;
@@ -120,6 +124,7 @@ void handle_stops_end () {
 // Function that moves the lift cabine to the first stop etage
 void goto_first_stop() {
   // lift cabine move to stops[0]->etage
+  
 }
 
 // Function that updates the stops array with a new stop or edits a stop
@@ -168,6 +173,16 @@ void setup() {
 
   // Init the I2C functions
   Wire.begin();
+  
+  pinMode(LED_PIN);
+  
+  pinMode(DIRECTION_PIN, OUTPUT);
+  pinMode(ENABLE_PIN, OUTPUT);
+
+  digitalWrite(ENABLE_PIN, LOW);
+  digitalWrite(DIRECTION, LOW);
+
+  Serial.println("Motor ready");
 }
 
 void loop() {
