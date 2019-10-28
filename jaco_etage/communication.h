@@ -27,6 +27,7 @@ uint8_t recieved_action = NO_MOVING;
 bool recieved_stop_accepted_for_up = 0; //STOP_FOR_UP_ACCEPTED; //NO_STOP_ACCEPTED;
 bool recieved_stop_accepted_for_down = 0;
 
+// Recieve event hander for I2C
 void receiveEvent()
 {
     recieved_floor = Wire.read();
@@ -42,6 +43,8 @@ void receiveEvent()
         Serial.println("checking in comm");
     }
 }
+
+// Request event hander for I2C
 void requestEvent()
 {
     Wire.write(1);
@@ -49,6 +52,7 @@ void requestEvent()
     Wire.write(send_stop);
 }
 
+// set the I2C up.
 void setup_I2C()
 {
     Wire.begin(JACO_ETAGE);

@@ -6,13 +6,14 @@
 
 //#define TEST
 
-#define LED 9
+#define LIFT_HERE_LED 9
 #define BUTTON_DOWN A0
 #define BUTTON_DOWN_LED A1
 #define BUTTON_UP A2
 #define BUTTON_UP_LED A3
 #define REED 10
 
+// Set the display, knipper when the lift is moving.
 void set_display(uint8_t digit)
 {
     static bool knipper_state = false;
@@ -41,6 +42,7 @@ void set_display(uint8_t digit)
     }
 }
 
+// Set the IO up.
 void setup_IO()
 {
     pinMode(BUTTON_DOWN, INPUT_PULLUP);
@@ -48,7 +50,7 @@ void setup_IO()
     pinMode(BUTTON_DOWN_LED, OUTPUT);
     pinMode(BUTTON_UP_LED, OUTPUT);
     pinMode(REED, INPUT);
-    pinMode(LED, OUTPUT);
+    pinMode(LIFT_HERE_LED, OUTPUT);
     pinMode(latchPin, OUTPUT);
     pinMode(clockPin, OUTPUT);
     pinMode(dataPin, OUTPUT);
@@ -65,7 +67,7 @@ void setup()
 
 #ifdef TEST
     Serial.println("testing........");
-    digitalWrite(LED, LOW);
+    digitalWrite(LIFT_HERE_LED, LOW);
     digitalWrite(BUTTON_UP_LED, LOW);
     digitalWrite(BUTTON_DOWN_LED, LOW);
 
@@ -76,7 +78,7 @@ void setup()
         //https: //www.allaboutcircuits.com/projects/interface-a-seven-segment-display-to-an-arduino/
     }
 
-    digitalWrite(LED, LOW);
+    digitalWrite(LIFT_HERE_LED, LOW);
     digitalWrite(BUTTON_UP_LED, HIGH);
     digitalWrite(BUTTON_DOWN_LED, HIGH);
 #endif
@@ -84,7 +86,21 @@ void setup()
 
 void loop()
 {
+#ifdef TEST
+    // Print floor when it changes.
+    static uint8_t previous_recieved_floor;
+    if (recieved_floor != previous_recieved_floor)
+    {
+        previous_recieved_floor = recieved_floor;
+        Serial.print("recieved_floor: ");
+        Serial.println(recieved_floor);
+    }
+#endif
+
+    // Set the recieved floor number on the display
     set_display(recieved_floor);
+
+    // Check if the buttons are pressed.
     if (!digitalRead(BUTTON_DOWN))
     {
         send_stop = STOP_FOR_DOWN;
@@ -100,18 +116,15 @@ void loop()
         send_stop = NO_STOP_NEEDED;
         //Serial.println("no stop needed");
     }
+
+    // read the reed sensor out.
     send_is_lift_here = !digitalRead(REED);
     //Serial.println("lift is: " + send_is_lift_here);
 
-    digitalWrite(LED, send_is_lift_here);
-    static uint8_t previous_recieved_floor;
-    if (recieved_floor != previous_recieved_floor)
-    {
-        previous_recieved_floor = recieved_floor;
-        Serial.print("recieved_floor: ");
-        Serial.println(recieved_floor);
-    }
+    //  Write the red led high when the lift is stopped here.
+    digitalWrite(LIFT_HERE_LED, send_is_lift_here && recieved_action == WAITING);
 
+    // Write the led in the button high when the stop is accepted
     if (recieved_stop_accepted_for_down)
     {
         digitalWrite(BUTTON_DOWN_LED, LOW);
@@ -120,7 +133,6 @@ void loop()
     {
         digitalWrite(BUTTON_DOWN_LED, HIGH);
     }
-
     if (recieved_stop_accepted_for_up)
     {
         digitalWrite(BUTTON_UP_LED, LOW);
@@ -132,6 +144,7 @@ void loop()
         //Serial.println("checking");
     }
 
+    // Reset the stop accepted byte.
     if (recieved_action == WAITING && !digitalRead(REED))
     {
         recieved_stop_accepted_for_down = 0;
