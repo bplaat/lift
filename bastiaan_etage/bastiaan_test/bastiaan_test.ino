@@ -32,11 +32,9 @@ void digit_display_set_digit(uint8_t digit) {
 
 #define UP_BUTTON_PIN 10
 #define UP_LED_PIN 11
-bool up_pressed = false;
 
 #define DOWN_BUTTON_PIN 12
 #define DOWN_LED_PIN 13
-bool down_pressed = false;
 
 #define IR_SENSOR_PIN A0
 
@@ -67,13 +65,6 @@ void loop() {
         }
     }
 
-    digitalWrite(UP_LED_PIN, up_pressed);
-    if (digitalRead(UP_BUTTON_PIN) == LOW) {
-        up_pressed = !up_pressed;
-    }
-
-    digitalWrite(DOWN_LED_PIN, down_pressed);
-    if (digitalRead(DOWN_BUTTON_PIN) == LOW) {
-        down_pressed = !down_pressed;
-    }
+    digitalWrite(UP_LED_PIN, digitalRead(UP_BUTTON_PIN) == LOW);
+    digitalWrite(DOWN_LED_PIN, digitalRead(DOWN_BUTTON_PIN) == LOW);
 }
