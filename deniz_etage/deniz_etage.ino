@@ -6,7 +6,7 @@
 
 #define DENIZ_ETAGE 2
 
-#define ANSWERSIZE 5
+#define ANSWERSIZE 3
 
 // led's
 int whiteLed = 5; // led up button
@@ -103,31 +103,22 @@ void receiveEvent() {
   Serial.println("receive");
   liftEtage = Wire.read();
   liftState = Wire.read();
-  liftStopAccepted = Wire.read();
-
-  while (0 < Wire.available()) {
-    byte x = Wire.read();
+  if (liftState == liftWaiting && liftHere) {
+    liftStopAccepted = 0;
   }
 
   int newLiftStopAccepted = Wire.read();
   if (newLiftStopAccepted != 0) {
     liftStopAccepted = newLiftStopAccepted;
-
-    if (liftState == liftWaiting && liftHere) {
-      liftStopAccepted = 0;
-    } else {
-      Serial.println("Error");
-    }
   }
 }
 
 //
 void requestEvent() {
   Serial.println("request");
-  Wire.write(2);
+  Wire.write(1);
   Wire.write(liftHere);
   Wire.write(liftStop);
-
   if (liftStop != 0) {
     liftStop = 0;
   }
@@ -141,7 +132,7 @@ void loop() {
     Serial.println("Reed active");
     Serial.println("Led for here on");
     liftHere = 1;
-    writeDigit(2);
+    // writeDigit(2);
     digitalWrite(ledPin, HIGH);
     digitalWrite(whiteLed, LOW);
     digitalWrite(redLed, LOW);
@@ -178,7 +169,6 @@ void loop() {
     } else {
       Serial.println("Up not pressed");
     }
-    delay(50);
   }
   lastStateUp = buttonStateUp;
 
@@ -194,7 +184,6 @@ void loop() {
     } else {
       Serial.println("Down not pressed");
     }
-    delay(50);
   }
   lastStateDown = buttonStateDown;
 }
