@@ -41,12 +41,15 @@ Keypad keypad = Keypad(makeKeymap(keypad_keys), keypad_row_pins, keypad_column_p
 uint8_t lift_etage = 0;
 uint8_t lift_state = LIFT_STATE_STILL;
 
+#define MOTOR_ETAGE_TIME 500
+uint32_t motor_time = 0;
+
 // Lift input led pins
 #define LED_PIN 10
 
-// DC motor pins
-#define ENABLE_PIN 11
-#define DIRECTION_PIN 12
+// Motor pins
+#define MOTOR_ENABLE_PIN 11
+#define MOTOR_DIRECTION_PIN 12
 
 // The stop struct
 typedef struct Stop {
@@ -123,10 +126,14 @@ void handle_stops_end () {
 
 // Function that moves the lift cabine to the first stop etage
 void goto_first_stop() {
-  // lift cabine move to stops[0]->etage
-  digitalWrite(DIRECTION_PIN, stops[0]->direction);
-  analogWrite(ENABLE_PIN, MOTOR_SPEED);
-  // continue with a timer
+  // Set the direction of the motor
+  digitalWrite(MOTOR_DIRECTION_PIN, stops[0]->direction);
+
+  // Calculate motor time
+  motor_time = millis() + abs(lift_etage - stops[0]->etage) * MOTOR_ETAGE_TIME;
+
+  // Start the motor
+  analogWrite(MOTOR_ENABLE_PIN, 127);
 }
 
 // Function that updates the stops array with a new stop or edits a stop
@@ -176,15 +183,26 @@ void setup() {
   // Init the I2C functions
   Wire.begin();
 
-  // Init pins
+  // Init Arduino pins
   pinMode(LED_PIN, OUTPUT);
-  pinMode(ENABLE_PIN, OUTPUT);
-  analogWrite(ENABLE_PIN, 0);
-  pinMode(DIRECTION_PIN, OUTPUT);
-  digitalWrite(DIRECTION_PIN, LOW);
+
+  pinMode(MOTOR_ENABLE_PIN, OUTPUT);
+  analogWrite(MOTOR_ENABLE_PIN, 0);
+
+  pinMode(MOTOR_DIRECTION_PIN, OUTPUT);
+  digitalWrite(MOTOR_DIRECTION_PIN, 0);
 }
 
 void loop() {
+  // Check to stop motor
+  if (millis() > motor_time) {
+    // Stop motor
+    analogWrite(MOTOR_ENABLE_PIN, 0);
+
+    // Handle motor stop end
+    handle_stops_end();
+  }
+
   // Check of the stop end state is waiting: wait and then go to the next best stop
   if (wait_state == WAIT_STATE_ON && millis() - wait_time > WAIT_TIME) {
     wait_state = WAIT_STATE_OFF;
@@ -216,7 +234,7 @@ void loop() {
 
   // Loop over all the etages and send and receive information
   for (uint8_t etage = 1; etage <= LIFT_ETAGES_COUNT; etage++) {
-    // Send the information conform protocol
+    // Check if the stop accepted must be send
     uint8_t lift_stop_accepted = 0;
     for (uint8_t i = 0; i < stops_length; i++) {
       if (stops[i]->etage == etage && !stops[i]->reported) {
@@ -226,6 +244,7 @@ void loop() {
       }
     }
 
+    // Send the information conform protocol
     Wire.beginTransmission(etage);
     Wire.write(lift_etage);
     Wire.write(lift_state);
@@ -285,7 +304,8 @@ void loop() {
     #endif
   }
 
+  // When in debug mode add a short delay
   #ifdef DEBUG
-    delay(500);
+    delay(250);
   #endif
 }
