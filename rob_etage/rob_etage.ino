@@ -1,8 +1,8 @@
 #include <Wire.h>
 
 #define led_pin  4
-#define up_led  5
-#define down_led  6
+#define led_up  5
+#define led_down  6
 #define button_up  7
 #define button_down  8
 #define clock_pin  10  //Pin connected to SH_CP of 74HC595 
@@ -49,6 +49,7 @@ int lift_stop_accepted = 0;
 #define STOPFORDOWN 1
 
 bool blink_state = false;
+int blink_time;
 
 void writeDigit(int i) 
 {
@@ -67,6 +68,7 @@ void receive_event(){
         int new_lift_stop_accepted = Wire.read();
         if (new_lift_stop_accepted != 0) {
             lift_stop_accepted = new_lift_stop_accepted;
+  }
 }
 
 void request_event(){
@@ -81,7 +83,6 @@ void request_event(){
 
 void setup ()
 {
-    
     Serial.begin(9600);
     Serial.println("Rob etage klaar");
     Wire.begin(ROB_ETAGE);
@@ -92,11 +93,14 @@ void setup ()
     pinMode(latch_pin, OUTPUT);
     pinMode(clock_pin, OUTPUT);
     pinMode(data_pin, OUTPUT);
-    pinMode(up_led, OUTPUT);
-    pinMode(down_led, OUTPUT);
+    pinMode(led_up, OUTPUT);
+    pinMode(led_down, OUTPUT);
     pinMode(button_up, INPUT);
     pinMode(button_down, INPUT);
 
+    digitalWrite(led_up, LOW);
+    digitalWrite(led_down, LOW);
+    digitalWrite(led_pin, LOW);
 }
 
 void loop()
@@ -109,8 +113,8 @@ void loop()
     lift_here = 1;
     // writeDigit(2);
     digitalWrite(led_pin, HIGH);
-    digitalWrite(up_led, LOW);
-    digitalWrite(down_led, LOW);
+    digitalWrite(led_up, LOW);
+    digitalWrite(led_down, LOW);
   } else {
     digitalWrite(led_pin, LOW);
     writeDigit(lift_etage);
@@ -134,7 +138,7 @@ void loop()
         button_up_press = true;
         lift_stop = STOPFORUP;
         Serial.println("Up pressed");
-        digitalWrite(up_led, HIGH);
+        digitalWrite(led_up, HIGH);
         Serial.println("Up led on");
       } else {
         Serial.println("Up not pressed");
@@ -149,7 +153,7 @@ void loop()
         button_down_press = true;
         lift_stop = STOPFORDOWN;
         Serial.println("Down pressed");
-        digitalWrite(redLed, HIGH);
+        digitalWrite(led_down, HIGH);
         Serial.println("Down led on");
       } else {
         Serial.println("Down not pressed");
