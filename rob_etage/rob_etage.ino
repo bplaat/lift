@@ -50,26 +50,6 @@ int lift_stop_accepted = 0;
 
 bool blink_state = false;
 
-void setup ()
-{
-    
-    Serial.begin(9600);
-    Serial.println("Rob etage klaar");
-    Wire.begin(ROB_ETAGE);
-    Wire.onReceive(receive_event);
-    Wire.onRequest(request_event);
-    pinMode(led_pin, OUTPUT);
-    pinMode(reed_switch, INPUT_PULLUP);
-    pinMode(latch_pin, OUTPUT);
-    pinMode(clock_pin, OUTPUT);
-    pinMode(data_pin, OUTPUT);
-    pinMode(up_led, OUTPUT);
-    pinMode(down_led, OUTPUT);
-    pinMode(button_up, INPUT);
-    pinMode(button_down, INPUT);
-
-}
-
 void writeDigit(int i) 
 {
     digitalWrite (latch_pin, LOW ); // latchPin low for duration of transmission
@@ -98,6 +78,27 @@ void request_event(){
         lift_stop = 0;
     }
 }
+
+void setup ()
+{
+    
+    Serial.begin(9600);
+    Serial.println("Rob etage klaar");
+    Wire.begin(ROB_ETAGE);
+    Wire.onReceive(receive_event);
+    Wire.onRequest(request_event);
+    pinMode(led_pin, OUTPUT);
+    pinMode(reed_switch, INPUT_PULLUP);
+    pinMode(latch_pin, OUTPUT);
+    pinMode(clock_pin, OUTPUT);
+    pinMode(data_pin, OUTPUT);
+    pinMode(up_led, OUTPUT);
+    pinMode(down_led, OUTPUT);
+    pinMode(button_up, INPUT);
+    pinMode(button_down, INPUT);
+
+}
+
 void loop()
 {
     lift_here = digitalRead(reed_switch);
