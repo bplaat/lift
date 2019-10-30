@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <Arduino.h>
 
-//#define TEST
+#define TEST
 
 #define LIFT_HERE_LED 9
 #define BUTTON_DOWN A0
@@ -67,7 +67,7 @@ void setup()
 
 #ifdef TEST
     Serial.println("testing........");
-    digitalWrite(LIFT_HERE_LED, LOW);
+    digitalWrite(LIFT_HERE_LED, HIGH);
     digitalWrite(BUTTON_UP_LED, LOW);
     digitalWrite(BUTTON_DOWN_LED, LOW);
 
