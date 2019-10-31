@@ -4,10 +4,11 @@
 #include <stdint.h>
 #include <Arduino.h>
 
-#define TEST
+//#define TEST
 
 #define LIFT_HERE_LED 9
 #define GROUNT_PIN 8
+#define GROUNT_PIN2 6
 #define BUTTON_DOWN A0
 #define BUTTON_DOWN_LED A1
 #define BUTTON_UP A2
@@ -56,7 +57,9 @@ void setup_IO()
     pinMode(clockPin, OUTPUT);
     pinMode(dataPin, OUTPUT);
     pinMode(GROUNT_PIN, OUTPUT);
+    pinMode(GROUNT_PIN2, OUTPUT);
     digitalWrite(GROUNT_PIN, LOW);
+    digitalWrite(GROUNT_PIN2, LOW);
     digitalWrite(BUTTON_UP_LED, LOW);
     digitalWrite(BUTTON_DOWN_LED, LOW);
 }

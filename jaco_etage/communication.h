@@ -18,6 +18,7 @@
 #define STOP_FOR_UP_ACCEPTED 1
 
 #define LIFT_IS_HERE 1
+#define JACO_ETAGE 1
 
 uint8_t send_is_lift_here = 0;
 uint8_t send_stop = 0;
