@@ -83,6 +83,10 @@ void setup() {
   digitalWrite(ledPin, LOW);
 }
 
+void clearDigit() {
+  digitalWrite(LATCHPIN, LOW);
+}
+
 // function for 7 segment display
 void writeDigit(int i) {
   digitalWrite(LATCHPIN, LOW); // latchPin low for duration of transmission
@@ -95,9 +99,6 @@ void receiveEvent() {
   Serial.println("receive");
   liftEtage = Wire.read();
   liftState = Wire.read();
-  if (liftState == LIFTWAITING && liftHere) {
-    liftStopAccepted = 0;
-  }
 
   int newLiftStopAccepted = Wire.read();
   if (newLiftStopAccepted != 0) {
@@ -121,26 +122,39 @@ void loop() {
   liftHere = digitalRead(reedSwitchPin);
   if (liftState != LIFTMOVING && liftHere) {
     digitalWrite(ledPin, HIGH);
-    writeDigit(liftEtage);
   } else {
-    writeDigit(liftEtage);
+    digitalWrite(ledPin, LOW);
+  }
+
+  if (liftState == LIFTWAITING && liftHere) {
+    liftStopAccepted = 0;
   }
 
   // blink display
   if (liftState == LIFTMOVING) {
-    if (blinkState == 0 && millis() - blinkTime > 100) {
+    if (blinkState == 0 && millis() - blinkTime > 200) {
       blinkState = 1;
       blinkTime = millis();
     }
-    if (blinkState == 1 && millis() - blinkTime > 100) {
+    if (blinkState == 1 && millis() - blinkTime > 200) {
       blinkState = 0;
       blinkTime = millis();
     }
+
+    if (blankState == 1) {
+      writeDigit(liftEtage);
+    } else {
+      clearDigit();
+    }
+  } else {
+    writeDigit(liftEtage);
   }
 
   // button for stop up
   if (liftStopAccepted == STOPFORUP) {
     digitalWrite(whiteLed, HIGH);
+  } else {
+    digitalWrite(whiteLed, LOW);
   }
 
   buttonStateUp = digitalRead(buttonPinUp);
@@ -152,7 +166,9 @@ void loop() {
 
   // button for stop down
   if (liftStopAccepted == STOPFORDOWN) {
-  digitalWrite(redLed, HIGH);
+    digitalWrite(redLed, HIGH);
+  } else {
+    digitalWrite(redLed, LOW);
   }
 
   buttonStateDown = digitalRead(buttonPinDown);

@@ -10,7 +10,7 @@
 #define DEBUG
 
 // The etage address and other protocol constants
-#define ETAGE_ADDRESS 1
+#define ETAGE_ADDRESS 2
 #define PROTOCOL_RECEIVE_MESSAGE_LENGTH 3
 
 // The pins for the digit display
@@ -98,14 +98,12 @@ void receiveEvent(int16_t num_bytes) {
         Serial.println(lift_stop_accepted);
       #endif
     }
-    if (lift_state == LIFT_STATE_WAITING && lift_is_here) {
-      lift_stop_accepted = 0;
-    }
-  } else {
-    #ifdef DEBUG
-      Serial.println("ERROR: Received wrong amount off bytes!");
-    #endif
   }
+  #ifdef DEBUG
+    else {
+      Serial.println("ERROR: Received wrong amount off bytes!");
+    }
+  #endif
 }
 
 // On I2C request write data
@@ -157,6 +155,11 @@ void loop() {
   // Check if lift cabine is here
   lift_is_here = analogRead(IR_SENSOR_PIN) < 50;
   digitalWrite(LED_PIN, lift_state != LIFT_STATE_MOVING && lift_is_here);
+
+  // Clear the stop accepted when this lift is waiting at my etage
+  if (lift_state == LIFT_STATE_WAITING && lift_is_here) {
+    lift_stop_accepted = 0;
+  }
 
   // When the lift is moving blink the digit display
   if (lift_state == LIFT_STATE_MOVING) {
