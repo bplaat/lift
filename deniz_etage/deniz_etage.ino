@@ -4,7 +4,7 @@
 
 #include <Wire.h>
 
-#define DENIZ_ETAGE 2
+#define DENIZ_ETAGE 3
 #define ANSWERSIZE 3
 
 // led's
