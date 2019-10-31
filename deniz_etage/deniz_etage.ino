@@ -8,18 +8,19 @@
 #define ANSWERSIZE 3
 
 // led's
-int whiteLed = 5; // led up button
-int redLed = 3;   // led down button
-int ledPin = 7;   // led for here
+#define WHITELED 5 // led up button
+#define REDLED 3   // led down button
+#define LEDPIN 7   // led for here
 
 // buttons
-int buttonPinUp = 4;
-int buttonPinDown = 2;
+#define BUTTONPINUP 4
+#define BUTTONPINDOWN 2
+
 int buttonStateUp = 0;
 int buttonStateDown = 0;
 
 // reed
-int reedSwitchPin = 8; // reed sensor pin connected to
+#define REEDSWITCHPIN 8 // reed sensor pin connected to
 
 // shiftout
 #define CLOCKPIN 10  // pin connected to SRCLK of 74HC595 
@@ -67,20 +68,20 @@ void setup() {
   Wire.onRequest(requestEvent);
 
   // all the lift parts
-  pinMode(whiteLed, OUTPUT);
-  pinMode(redLed, OUTPUT);
-  pinMode(buttonPinUp, INPUT_PULLUP);
-  pinMode(buttonPinDown, INPUT_PULLUP);
-  pinMode(reedSwitchPin, INPUT);
-  pinMode(ledPin, OUTPUT);
+  pinMode(WHITELED, OUTPUT);
+  pinMode(REDLED, OUTPUT);
+  pinMode(BUTTONPINUP, INPUT_PULLUP);
+  pinMode(BUTTONPINDOWN, INPUT_PULLUP);
+  pinMode(REEDSWITCHPIN, INPUT);
+  pinMode(LEDPIN, OUTPUT);
   pinMode(LATCHPIN, OUTPUT);
   pinMode(CLOCKPIN, OUTPUT);
   pinMode(DATAPIN, OUTPUT);
 
   // begin with leds off
-  digitalWrite(redLed, LOW);
-  digitalWrite(whiteLed, LOW);
-  digitalWrite(ledPin, LOW);
+  digitalWrite(REDLED, LOW);
+  digitalWrite(WHITELED, LOW);
+  digitalWrite(LEDPIN, LOW);
 }
 
 void clearDigit() {
@@ -119,11 +120,11 @@ void requestEvent() {
 
 void loop() {
   // check if lift is here
-  liftHere = digitalRead(reedSwitchPin);
+  liftHere = digitalRead(REEDSWITCHPIN);
   if (liftState != LIFTMOVING && liftHere) {
-    digitalWrite(ledPin, HIGH);
+    digitalWrite(LEDPIN, HIGH);
   } else {
-    digitalWrite(ledPin, LOW);
+    digitalWrite(LEDPIN, LOW);
   }
 
   if (liftState == LIFTWAITING && liftHere) {
@@ -141,7 +142,7 @@ void loop() {
       blinkTime = millis();
     }
 
-    if (blankState == 1) {
+    if (blinkState == 1) {
       writeDigit(liftEtage);
     } else {
       clearDigit();
@@ -152,12 +153,12 @@ void loop() {
 
   // button for stop up
   if (liftStopAccepted == STOPFORUP) {
-    digitalWrite(whiteLed, HIGH);
+    digitalWrite(WHITELED, HIGH);
   } else {
-    digitalWrite(whiteLed, LOW);
+    digitalWrite(WHITELED, LOW);
   }
 
-  buttonStateUp = digitalRead(buttonPinUp);
+  buttonStateUp = digitalRead(BUTTONPINUP);
   if (buttonStateUp == LOW &&
     !(liftState == LIFTWAITING && liftHere) &&
     liftStopAccepted == 0 && liftStop == 0) {
@@ -166,12 +167,12 @@ void loop() {
 
   // button for stop down
   if (liftStopAccepted == STOPFORDOWN) {
-    digitalWrite(redLed, HIGH);
+    digitalWrite(REDLED, HIGH);
   } else {
-    digitalWrite(redLed, LOW);
+    digitalWrite(REDLED, LOW);
   }
 
-  buttonStateDown = digitalRead(buttonPinDown);
+  buttonStateDown = digitalRead(BUTTONPINDOWN);
   if (buttonStateDown == LOW &&
     !(liftState == LIFTWAITING && liftHere) &&
     liftStopAccepted == 0 && liftStop == 0) {
