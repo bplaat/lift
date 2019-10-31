@@ -28,7 +28,7 @@ uint8_t keypad_column_pins[KEYPAD_COLUMNS] = { 6, 7, 8, 9 };
 Keypad keypad = Keypad(makeKeymap(keypad_keys), keypad_row_pins, keypad_column_pins, KEYPAD_ROWS, KEYPAD_COLUMNS);
 
 // Global lift variables
-#define LIFT_ETAGES_COUNT 2
+#define LIFT_ETAGES_COUNT 3
 #define PROTOCOL_REQUEST_MESSAGE_LENGTH 3
 
 #define UP 1
@@ -185,12 +185,11 @@ void setup() {
 
   // Init Arduino pins
   pinMode(LED_PIN, OUTPUT);
-
   pinMode(MOTOR_ENABLE_PIN, OUTPUT);
-  analogWrite(MOTOR_ENABLE_PIN, 0);
-
   pinMode(MOTOR_DIRECTION_PIN, OUTPUT);
-  digitalWrite(MOTOR_DIRECTION_PIN, 0);
+
+  // Push the motor to the top
+  update_stops(LIFT_ETAGES_COUNT, UP, 1);
 }
 
 void loop() {
