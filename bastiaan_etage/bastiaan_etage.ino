@@ -10,7 +10,7 @@
 #define DEBUG
 
 // The etage address and other protocol constants
-#define ETAGE_ADDRESS 1
+#define ETAGE_ADDRESS 2
 #define PROTOCOL_RECEIVE_MESSAGE_LENGTH 3
 
 // The pins for the digit display
