@@ -4,28 +4,23 @@
 
 #include <Wire.h>
 
-#define DENIZ_ETAGE 2
+#define DENIZ_ETAGE 3
 #define ANSWERSIZE 3
 
 // led's
-int whiteLed = 5; // led up button
-int redLed = 3;   // led down button
-int ledPin = 7;   // led for here
+#define WHITELED 5 // led up button
+#define REDLED 3   // led down button
+#define LEDPIN 7   // led for here
 
 // buttons
-bool buttonUpPress = false;
-bool buttonDownPress = false;
+#define BUTTONPINUP 4
+#define BUTTONPINDOWN 2
 
-int buttonPinUp = 4;
-int buttonPinDown = 2;
 int buttonStateUp = 0;
-
 int buttonStateDown = 0;
-int lastStateUp = 0;
-int lastStateDown = 0;
 
 // reed
-int reedSwitchPin = 8; // reed sensor pin connected to
+#define REEDSWITCHPIN 8 // reed sensor pin connected to
 
 // shiftout
 #define CLOCKPIN 10  // pin connected to SRCLK of 74HC595 
@@ -58,10 +53,10 @@ int liftStopAccepted = 0;
 #define LIFTWAITING 2
 
 #define NOSTOP 0
-#define STOPFORUP -1
-#define STOPFORDOWN 1
+#define STOPFORUP 1
+#define STOPFORDOWN -1
 
-// blink display
+int blinkTime = millis();
 bool blinkState = false;
 
 void setup() {
@@ -73,20 +68,24 @@ void setup() {
   Wire.onRequest(requestEvent);
 
   // all the lift parts
-  pinMode(whiteLed, OUTPUT);
-  pinMode(redLed, OUTPUT);
-  pinMode(buttonPinUp, INPUT_PULLUP);
-  pinMode(buttonPinDown, INPUT_PULLUP);
-  pinMode(reedSwitchPin, INPUT);
-  pinMode(ledPin, OUTPUT);
+  pinMode(WHITELED, OUTPUT);
+  pinMode(REDLED, OUTPUT);
+  pinMode(BUTTONPINUP, INPUT_PULLUP);
+  pinMode(BUTTONPINDOWN, INPUT_PULLUP);
+  pinMode(REEDSWITCHPIN, INPUT);
+  pinMode(LEDPIN, OUTPUT);
   pinMode(LATCHPIN, OUTPUT);
   pinMode(CLOCKPIN, OUTPUT);
   pinMode(DATAPIN, OUTPUT);
 
   // begin with leds off
-  digitalWrite(redLed, LOW);
-  digitalWrite(whiteLed, LOW);
-  digitalWrite(ledPin, LOW);
+  digitalWrite(REDLED, LOW);
+  digitalWrite(WHITELED, LOW);
+  digitalWrite(LEDPIN, LOW);
+}
+
+void clearDigit() {
+  digitalWrite(LATCHPIN, LOW);
 }
 
 // function for 7 segment display
@@ -96,14 +95,11 @@ void writeDigit(int i) {
   digitalWrite(LATCHPIN, HIGH); // latchPin high to save the data
 }
 
-//
+// i2c receive
 void receiveEvent() {
   Serial.println("receive");
   liftEtage = Wire.read();
   liftState = Wire.read();
-  if (liftState == LIFTWAITING && liftHere) {
-    liftStopAccepted = 0;
-  }
 
   int newLiftStopAccepted = Wire.read();
   if (newLiftStopAccepted != 0) {
@@ -111,7 +107,7 @@ void receiveEvent() {
   }
 }
 
-//
+// i2c request
 void requestEvent() {
   Serial.println("request");
   Wire.write(1);
@@ -124,59 +120,62 @@ void requestEvent() {
 
 void loop() {
   // check if lift is here
-  liftHere = digitalRead(reedSwitchPin);
-
-  if (liftHere == HIGH) {
-    Serial.println("Reed active");
-    Serial.println("Led for here on");
-    liftHere = 1;
-    // writeDigit(2);
-    digitalWrite(ledPin, HIGH);
-    digitalWrite(whiteLed, LOW);
-    digitalWrite(redLed, LOW);
+  liftHere = digitalRead(REEDSWITCHPIN);
+  if (liftState != LIFTMOVING && liftHere) {
+    digitalWrite(LEDPIN, HIGH);
   } else {
-    digitalWrite(ledPin, LOW);
-    writeDigit(liftEtage);
+    digitalWrite(LEDPIN, LOW);
+  }
+
+  if (liftState == LIFTWAITING && liftHere) {
+    liftStopAccepted = 0;
   }
 
   // blink display
   if (liftState == LIFTMOVING) {
-    if (blinkState == 0 && millis() - blinkTime > 100) {
+    if (blinkState == 0 && millis() - blinkTime > 200) {
       blinkState = 1;
       blinkTime = millis();
     }
-    if (blinkState == 1 && millis() - blinkTime > 100) {
+    if (blinkState == 1 && millis() - blinkTime > 200) {
       blinkState = 0;
       blinkTime = millis();
     }
 
-    // button for stop up
-    buttonStateUp = digitalRead(buttonPinUp);
-    if (buttonStateUp != lastStateUp) {
-      if (buttonStateUp == LOW) {
-        buttonUpPress = true;
-        liftStop = STOPFORUP;
-        Serial.println("Up pressed");
-        digitalWrite(whiteLed, HIGH);
-        Serial.println("White led on");
-      } else {
-        Serial.println("Up not pressed");
-      }
+    if (blinkState == 1) {
+      writeDigit(liftEtage);
+    } else {
+      clearDigit();
     }
-    lastStateUp = buttonStateUp;
-
-    // button for stop down
-    buttonStateDown = digitalRead(buttonPinDown);
-    if (buttonStateDown != lastStateDown) {
-      if (buttonStateDown == LOW) {
-        buttonDownPress = true;
-        liftStop = STOPFORDOWN;
-        Serial.println("Down pressed");
-        digitalWrite(redLed, HIGH);
-        Serial.println("Red led on");
-      } else {
-        Serial.println("Down not pressed");
-      }
-    }
-    lastStateDown = buttonStateDown;
+  } else {
+    writeDigit(liftEtage);
   }
+
+  // button for stop up
+  if (liftStopAccepted == STOPFORUP) {
+    digitalWrite(WHITELED, HIGH);
+  } else {
+    digitalWrite(WHITELED, LOW);
+  }
+
+  buttonStateUp = digitalRead(BUTTONPINUP);
+  if (buttonStateUp == LOW &&
+    !(liftState == LIFTWAITING && liftHere) &&
+    liftStopAccepted == 0 && liftStop == 0) {
+    liftStop = STOPFORUP;
+  }
+
+  // button for stop down
+  if (liftStopAccepted == STOPFORDOWN) {
+    digitalWrite(REDLED, HIGH);
+  } else {
+    digitalWrite(REDLED, LOW);
+  }
+
+  buttonStateDown = digitalRead(BUTTONPINDOWN);
+  if (buttonStateDown == LOW &&
+    !(liftState == LIFTWAITING && liftHere) &&
+    liftStopAccepted == 0 && liftStop == 0) {
+    liftStop = STOPFORDOWN;
+  }
+}
