@@ -23,29 +23,29 @@ int last_state_down = 0;
 
 
 
-//const byte dat_array[] = 
-//{
-//    B11111100,  // cijfer 0
-//    B00001100,  // cijfer 1
-//    B10110110,  // cijfer 2
-//    B10011110,  // cijfer 3
-//    B01001110,  // cijfer 4
-//    B11011010,  // cijfer 5
-//    B11111010   // cijfer 6
-//}; 
-//
-const byte datArray[] = {
-  B01111110,  // 0
-  B00001100,  // 1
-  B10110110,  // 2
-  B10011110,  // 3
-  B11001100,  // 4
-  B11011010,  // 5
-  B11111010,  // 6
-  B00001110,  // 7
-  B11111110,  // 8
-  B11011110   // 9
-};
+const byte dat_array[] = 
+{ 
+    B11111100,  // cijfer 0
+    B00001100,  // cijfer 1
+    B10110110,  // cijfer 2
+    B10011110,  // cijfer 3
+    B01001110,  // cijfer 4
+    B11011010,  // cijfer 5
+    B11111010   // cijfer 6
+}; 
+
+//const byte dat_array[] = {
+//  B01111110,  // 0
+//  B00001100,  // 1
+//  B10110110,  // 2
+//  B10011110,  // 3
+//  B11001100,  // 4
+//  B11011010,  // 5
+//  B11111010,  // 6
+//  B00001110,  // 7
+//  B11111110,  // 8
+//  B11011110   // 9
+//};
 
 int lift_etage = 0;
 int lift_state = 0;
@@ -62,7 +62,7 @@ int lift_stop_accepted = 0;
 #define STOP_UP 2
 
 bool blink_state = false;
-int blink_time;
+int blink_time = millis();
 
 void write_digit(int i) 
 {
@@ -120,7 +120,7 @@ void loop()
 {
     lift_here = digitalRead(reed_switch);
 
-       if (lift_here != LIFTMOVING && lift_here {
+    if (lift_here != LIFT_MOVING && lift_here) {
        digitalWrite(led_pin, HIGH);
        write_digit(lift_etage);
     } 
@@ -128,9 +128,8 @@ void loop()
       digitalWrite(led_pin, LOW);
       Serial.println("Lift not here");
       write_digit (lift_etage);
-    }
+      }
 
-  // blink display
   if (lift_state == LIFT_MOVING) {
     if (blink_state == 0 && millis() - blink_time > 100) {
       blink_state = 1;
@@ -142,23 +141,21 @@ void loop()
     }
   }
    
-    // button for stop up
     if(lift_stop_accepted == STOP_UP){
       digitalWrite(led_up, HIGH);
     }
-    button_state_up = digitalRead(button_up, HIGH);
+    button_state_up = digitalRead(button_up);
     if(button_state_up == LOW &&
      !(lift_state == LIFT_WAITING && lift_here) 
      && lift_stop_accepted == 0 && lift_stop == 0){
        lift_stop = STOP_UP;
     }
 
-    // button for stop down
     if (lift_stop_accepted == STOP_DOWN) {
       digitalWrite(led_down, HIGH);
     }
 
-    button_state_down = digitalRead(button_down, HIGH);
+    button_state_down = digitalRead(button_down);
     if(button_state_down == LOW && 
     !(lift_state == LIFT_WAITING && lift_here) 
     && lift_stop_accepted == 0 && lift_stop == 0){
