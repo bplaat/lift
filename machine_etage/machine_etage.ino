@@ -28,7 +28,7 @@ uint8_t keypad_column_pins[KEYPAD_COLUMNS] = { 6, 7, 8, 9 };
 Keypad keypad = Keypad(makeKeymap(keypad_keys), keypad_row_pins, keypad_column_pins, KEYPAD_ROWS, KEYPAD_COLUMNS);
 
 // Global lift variables
-#define LIFT_ETAGES_COUNT 5
+#define LIFT_ETAGES_COUNT 2
 #define PROTOCOL_REQUEST_MESSAGE_LENGTH 3
 
 #define UP 1
