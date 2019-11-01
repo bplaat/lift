@@ -31,7 +31,7 @@ void set_display(uint8_t digit)
     else if (knipper_state == false)
     {
         writeDigit(digit);
-        if (millis_start + 1000 < millis())
+        if (millis_start + 100 < millis())
         {
             knipper_state = true;
             millis_start = millis();
@@ -40,7 +40,7 @@ void set_display(uint8_t digit)
     else if (knipper_state == true)
     {
         writeDigit(10);
-        if (millis_start + 1000 < millis())
+        if (millis_start + 100 < millis())
         {
             knipper_state = false;
             millis_start = millis();
@@ -152,7 +152,9 @@ void loop()
     if (recieved_stop_accepted_for_up)
     {
         digitalWrite(BUTTON_UP_LED, HIGH);
+#ifdef TEST
         Serial.println("stop for up accepted");
+#endif
     }
     else
     {
