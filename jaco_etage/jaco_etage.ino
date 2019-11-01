@@ -128,7 +128,7 @@ void loop()
     //Serial.println("lift is: " + send_is_lift_here);
 
     //  Write the red led high when the lift is stopped here.
-    digitalWrite(LIFT_HERE_LED, send_is_lift_here && recieved_action == WAITING);
+    digitalWrite(LIFT_HERE_LED, !digitalRead(REED) && recieved_action == WAITING);
 
     // Write the led in the button high when the stop is accepted
     if (recieved_stop_accepted_for_down)
