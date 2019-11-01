@@ -99,10 +99,6 @@ void setup ()
   pinMode(LED_DOWN, OUTPUT);
   pinMode(BUTTON_UP, INPUT);
   pinMode(BUTTON_DOWN, INPUT);
-
-  digitalWrite(LED_UP, LOW);
-  digitalWrite(LED_DOWN, LOW);
-  digitalWrite(LED_PIN, LOW);
 }
 
 void clear_digit() {
@@ -122,11 +118,11 @@ void loop()
 
   if (lift_state == LIFT_MOVING) 
   {
-    if (blink_state == 0 && millis() - blink_time > 200) {
+    if (blink_state == 0 && millis() - blink_time > 100) {
       blink_state = 1;
       blink_time = millis();
     }
-    if (blink_state == 1 && millis() - blink_time > 200) {
+    if (blink_state == 1 && millis() - blink_time > 100) {
       blink_state = 0;
       blink_time = millis();
     }
@@ -140,7 +136,6 @@ void loop()
       clear_digit();
     }
   }
-   
   else 
   {
     write_digit(lift_etage);
@@ -149,6 +144,9 @@ void loop()
   if(lift_stop_accepted == STOP_UP)
   {
     digitalWrite(LED_UP, HIGH);
+  } 
+  else {
+    digitalWrite(LED_UP, LOW);    
   }
 
   button_state_up = digitalRead(BUTTON_UP);
@@ -163,6 +161,9 @@ void loop()
   if (lift_stop_accepted == STOP_DOWN) 
   {
     digitalWrite(LED_DOWN, HIGH);
+  } 
+  else {
+    digitalWrite(LED_DOWN, LOW);
   }
 
   button_state_down = digitalRead(BUTTON_DOWN);
