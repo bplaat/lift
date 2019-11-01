@@ -41,7 +41,7 @@ Keypad keypad = Keypad(makeKeymap(keypad_keys), keypad_row_pins, keypad_column_p
 uint8_t lift_etage = 0;
 uint8_t lift_state = LIFT_STATE_STILL;
 
-#define MOTOR_ETAGE_TIME 500
+#define MOTOR_ETAGE_TIME 10000
 uint32_t motor_time = 0;
 
 // Lift input led pins
@@ -49,7 +49,8 @@ uint32_t motor_time = 0;
 
 // Motor pins
 #define MOTOR_ENABLE_PIN 11
-#define MOTOR_DIRECTION_PIN 12
+#define MOTOR_UP_PIN 12
+#define MOTOR_DOWN_PIN 13
 
 // The stop struct
 typedef struct Stop {
@@ -127,13 +128,20 @@ void handle_stops_end () {
 // Function that moves the lift cabine to the first stop etage
 void goto_first_stop() {
   // Set the direction of the motor
-  digitalWrite(MOTOR_DIRECTION_PIN, stops[0]->direction);
+  if (stops[0]->direction == UP) {
+    digitalWrite(MOTOR_UP_PIN, HIGH);
+    digitalWrite(MOTOR_DOWN_PIN, LOW);
+  }
+  if (stops[0]->direction == DOWN) {
+    digitalWrite(MOTOR_UP_PIN, LOW);
+    digitalWrite(MOTOR_DOWN_PIN, HIGH);
+  }
 
   // Calculate motor time
   motor_time = millis() + abs(lift_etage - stops[0]->etage) * MOTOR_ETAGE_TIME;
 
   // Start the motor
-  analogWrite(MOTOR_ENABLE_PIN, 127);
+  digitalWrite(MOTOR_ENABLE_PIN, HIGH);
 }
 
 // Function that updates the stops array with a new stop or edits a stop
@@ -186,17 +194,20 @@ void setup() {
   // Init Arduino pins
   pinMode(LED_PIN, OUTPUT);
   pinMode(MOTOR_ENABLE_PIN, OUTPUT);
-  pinMode(MOTOR_DIRECTION_PIN, OUTPUT);
+  pinMode(MOTOR_UP_PIN, OUTPUT);
+  pinMode(MOTOR_DOWN_PIN, OUTPUT);
 
-  // Push the motor to the top
-  update_stops(LIFT_ETAGES_COUNT, UP, 1);
+  // Init motor to go down
+  digitalWrite(MOTOR_ENABLE_PIN, HIGH);
+  digitalWrite(MOTOR_UP_PIN, HIGH);
+  digitalWrite(MOTOR_DOWN_PIN, LOW);
 }
 
 void loop() {
-  // Check to stop motor
-  if (millis() > motor_time) {
+  // Check to stop motor  
+  if (lift_etage == stops[0]->etage) { //millis() > motor_time) {
     // Stop motor
-    analogWrite(MOTOR_ENABLE_PIN, 0);
+    digitalWrite(MOTOR_ENABLE_PIN, LOW);
 
     // Handle motor stop end
     handle_stops_end();
@@ -225,9 +236,9 @@ void loop() {
 
   // Print the information that the master is going to send to all the slaves
   #ifdef DEBUG
-    Serial.print("<- lift_etage = ");
+    Serial.print("lift_etage = ");
     Serial.println(lift_etage);
-    Serial.print("<- lift_state = ");
+    Serial.print("lift_state = ");
     Serial.println(lift_state);
   #endif
 
@@ -253,38 +264,19 @@ void loop() {
     // Request other information conform protocol
     if (Wire.requestFrom(etage, PROTOCOL_REQUEST_MESSAGE_LENGTH) == PROTOCOL_REQUEST_MESSAGE_LENGTH) {
       // Read ping value and ignore
-      uint8_t ping = Wire.read();
-      #ifdef DEBUG
-        Serial.print("-> ping[");
-        Serial.print(etage);
-        Serial.print("] = ");
-        Serial.println(ping);
-      #endif
+      Wire.read();
 
       // Read lift is here value
       uint8_t lift_is_here = Wire.read();
-      #ifdef DEBUG
-        Serial.print("-> lift_is_here[");
-        Serial.print(etage);
-        Serial.print("] = ");
-        Serial.println(lift_is_here);
-      #endif
-
-      // If lift is here then update lift etage
       if (lift_is_here == 1) {
+        if (lift_etage == 0) {
+          digitalWrite(MOTOR_ENABLE_PIN, LOW);
+        }
         lift_etage = etage;
       }
 
       // Read request lift stop value
       int8_t lift_request_stop = Wire.read();
-      #ifdef DEBUG
-        Serial.print("-> lift_request_stop[");
-        Serial.print(etage);
-        Serial.print("] = ");
-        Serial.println(lift_request_stop);
-      #endif
-
-      // Handle request stop
       if (lift_request_stop != 0) {
           update_stops(etage, lift_request_stop, 0);
           if (stops[0]->etage == etage && lift_state != LIFT_STATE_WAITING) {
@@ -305,6 +297,6 @@ void loop() {
 
   // When in debug mode add a short delay
   #ifdef DEBUG
-    delay(250);
+    delay(500);
   #endif
 }

@@ -3,7 +3,7 @@
 #pragma once
 
 #include <Wire.h>
-#include "addresses.h"
+
 #include <Arduino.h>
 
 #define NO_MOVING 0
@@ -18,12 +18,13 @@
 #define STOP_FOR_UP_ACCEPTED 1
 
 #define LIFT_IS_HERE 1
+#define JACO_ETAGE 1
 
 uint8_t send_is_lift_here = 0;
 uint8_t send_stop = 0;
 
-uint8_t recieved_floor = 1;
-uint8_t recieved_action = NO_MOVING;
+uint8_t recieved_floor = 0;
+uint8_t recieved_action = WAITING;
 bool recieved_stop_accepted_for_up = 0; //STOP_FOR_UP_ACCEPTED; //NO_STOP_ACCEPTED;
 bool recieved_stop_accepted_for_down = 0;
 
