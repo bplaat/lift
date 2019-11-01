@@ -10,7 +10,7 @@
 #define LATCH_PIN  12  //Pin connected to ST_CP of 74HC595
 #define REED_SWITCH  13
 
-#define ROB_ETAGE 5
+#define ROB_ETAGE 4
 #define ANSWER_SIZE 3
 
 bool button_up_press = false;
@@ -21,31 +21,18 @@ int button_state_down = 0;
 int last_state_up = 0;
 int last_state_down = 0;
 
-
-
-const byte dat_array[] = 
-{ 
-  B11111100,  // cijfer 0
-  B00001100,  // cijfer 1
-  B10110110,  // cijfer 2
-  B10011110,  // cijfer 3
-  B01001110,  // cijfer 4
-  B11011010,  // cijfer 5
-  B11111010   // cijfer 6
-}; 
-
-//const byte dat_array[] = {
-//  B01111110,  // 0
-//  B00001100,  // 1
-//  B10110110,  // 2
-//  B10011110,  // 3
-//  B11001100,  // 4
-//  B11011010,  // 5
-//  B11111010,  // 6
-//  B00001110,  // 7
-//  B11111110,  // 8
-//  B11011110   // 9
-//};
+const byte dat_array[] = {
+  B01111110,  // 0
+  B00001100,  // 1
+  B10110110,  // 2
+  B10011110,  // 3
+  B11001100,  // 4
+  B11011010,  // 5
+  B11111010,  // 6
+  B00001110,  // 7
+  B11111110,  // 8
+  B11011110   // 9
+};
 
 int lift_etage = 0;
 int lift_state = 0;
@@ -104,7 +91,7 @@ void setup ()
   Wire.onReceive(receive_event);
   Wire.onRequest(request_event);
   pinMode(LED_PIN, OUTPUT);
-  pinMode(REED_SWITCH, INPUT_PULLUP);
+  pinMode(REED_SWITCH, INPUT);
   pinMode(LATCH_PIN, OUTPUT);
   pinMode(CLOCK_PIN, OUTPUT);
   pinMode(DATA_PIN, OUTPUT);
@@ -118,11 +105,15 @@ void setup ()
   digitalWrite(LED_PIN, LOW);
 }
 
+void clear_digit() {
+  digitalWrite(LATCH_PIN, LOW);
+}
+
 void loop()
 {
-  lift_here = digitalRead(REED_SWITCH);
+  lift_here = !digitalRead(REED_SWITCH);
 
-  if (lift_here != LIFT_MOVING && lift_here) {
+  if (lift_state != LIFT_MOVING && lift_here) {
     digitalWrite(LED_PIN, HIGH);
   } 
   else {
@@ -139,18 +130,20 @@ void loop()
       blink_state = 0;
       blink_time = millis();
     }
+  
+    if (blink_state == 1) 
+    {
+      write_digit(lift_etage);
+    } 
+    else 
+    {
+      clear_digit();
+    }
   }
-  if (blankState == 1) 
-  {
-    writeDigit(liftEtage);
-  } 
+   
   else 
   {
-    clearDigit();
-  } 
-  else 
-  {
-    writeDigit(liftEtage);
+    write_digit(lift_etage);
   }
 
   if(lift_stop_accepted == STOP_UP)
