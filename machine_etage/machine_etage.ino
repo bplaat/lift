@@ -28,7 +28,7 @@ uint8_t keypad_column_pins[KEYPAD_COLUMNS] = { 6, 7, 8, 9 };
 Keypad keypad = Keypad(makeKeymap(keypad_keys), keypad_row_pins, keypad_column_pins, KEYPAD_ROWS, KEYPAD_COLUMNS);
 
 // Global lift variables
-#define LIFT_ETAGES_COUNT 3
+#define LIFT_ETAGES_COUNT 4
 #define PROTOCOL_REQUEST_MESSAGE_LENGTH 3
 
 #define UP 1
@@ -40,9 +40,6 @@ Keypad keypad = Keypad(makeKeymap(keypad_keys), keypad_row_pins, keypad_column_p
 
 uint8_t lift_etage = 0;
 uint8_t lift_state = LIFT_STATE_STILL;
-
-#define MOTOR_ETAGE_TIME 10000
-uint32_t motor_time = 0;
 
 // Lift input led pins
 #define LED_PIN 10
@@ -110,23 +107,10 @@ int16_t stops_compare(Stop *a, Stop *b) {
   return 0;
 }
 
-// Function that handles a stop move end
-void handle_stops_end () {
-  lift_state = LIFT_STATE_STILL;
-  if (stops_length > 0) {
-    if (!stops[0]->begin && stops[0]->end) {
-      stops_shift();
-      wait_state = WAIT_STATE_ON;
-      wait_time = millis();
-    } else {
-      stops_shift();
-      lift_state = LIFT_STATE_WAITING;
-    }
-  }
-}
-
 // Function that moves the lift cabine to the first stop etage
 void goto_first_stop() {
+  lift_state = LIFT_STATE_MOVING;
+
   // Set the direction of the motor
   if (stops[0]->direction == UP) {
     digitalWrite(MOTOR_UP_PIN, HIGH);
@@ -136,9 +120,6 @@ void goto_first_stop() {
     digitalWrite(MOTOR_UP_PIN, LOW);
     digitalWrite(MOTOR_DOWN_PIN, HIGH);
   }
-
-  // Calculate motor time
-  motor_time = millis() + abs(lift_etage - stops[0]->etage) * MOTOR_ETAGE_TIME;
 
   // Start the motor
   digitalWrite(MOTOR_ENABLE_PIN, HIGH);
@@ -204,13 +185,18 @@ void setup() {
 }
 
 void loop() {
-  // Check to stop motor  
-  if (lift_etage == stops[0]->etage) { //millis() > motor_time) {
-    // Stop motor
+  // Check if the etage is at the stop etage
+  if (stops_length > 0 && lift_etage == stops[0]->etage) {
+    lift_state = LIFT_STATE_STILL;
     digitalWrite(MOTOR_ENABLE_PIN, LOW);
-
-    // Handle motor stop end
-    handle_stops_end();
+    if (!stops[0]->begin && stops[0]->end) {
+      stops_shift();
+      wait_state = WAIT_STATE_ON;
+      wait_time = millis();
+    } else {
+      stops_shift();
+      lift_state = LIFT_STATE_WAITING;
+    }
   }
 
   // Check of the stop end state is waiting: wait and then go to the next best stop
@@ -294,9 +280,4 @@ void loop() {
       }
     #endif
   }
-
-  // When in debug mode add a short delay
-  #ifdef DEBUG
-    delay(500);
-  #endif
 }
