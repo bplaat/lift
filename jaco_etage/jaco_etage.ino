@@ -7,8 +7,12 @@
 //#define TEST
 
 #define LIFT_HERE_LED 9
-#define GROUNT_PIN 8
-#define GROUNT_PIN2 6
+
+#define GROUND_PINS   \
+    {                 \
+        3, 4, 5, 6, 8 \
+    }
+#define GROUND_PINS_COUNT 5
 #define BUTTON_DOWN A0
 #define BUTTON_DOWN_LED A1
 #define BUTTON_UP A2
@@ -56,12 +60,18 @@ void setup_IO()
     pinMode(latchPin, OUTPUT);
     pinMode(clockPin, OUTPUT);
     pinMode(dataPin, OUTPUT);
-    pinMode(GROUNT_PIN, OUTPUT);
-    pinMode(GROUNT_PIN2, OUTPUT);
-    digitalWrite(GROUNT_PIN, LOW);
-    digitalWrite(GROUNT_PIN2, LOW);
+    // pinMode(GROUNT_PIN, OUTPUT);
+    // pinMode(GROUNT_PIN2, OUTPUT);
+    // digitalWrite(GROUNT_PIN, LOW);
+    // digitalWrite(GROUNT_PIN2, LOW);
     digitalWrite(BUTTON_UP_LED, LOW);
     digitalWrite(BUTTON_DOWN_LED, LOW);
+    int ground_pins[] = GROUND_PINS;
+    for (uint8_t i = 0; i < GROUND_PINS_COUNT; i++)
+    {
+        pinMode(ground_pins[i], OUTPUT);
+        digitalWrite(ground_pins[i], LOW);
+    }
 }
 
 void setup()
@@ -74,8 +84,8 @@ void setup()
 #ifdef TEST
     Serial.println("testing........");
     digitalWrite(LIFT_HERE_LED, HIGH);
-    digitalWrite(BUTTON_UP_LED, LOW);
-    digitalWrite(BUTTON_DOWN_LED, LOW);
+    digitalWrite(BUTTON_UP_LED, HIGH);
+    digitalWrite(BUTTON_DOWN_LED, HIGH);
 
     for (uint8_t i = 0; i <= 9; i++)
     {
@@ -85,8 +95,8 @@ void setup()
     }
 
     digitalWrite(LIFT_HERE_LED, LOW);
-    digitalWrite(BUTTON_UP_LED, HIGH);
-    digitalWrite(BUTTON_DOWN_LED, HIGH);
+    digitalWrite(BUTTON_UP_LED, LOW);
+    digitalWrite(BUTTON_DOWN_LED, LOW);
 #endif
 }
 
@@ -128,25 +138,25 @@ void loop()
     //Serial.println("lift is: " + send_is_lift_here);
 
     //  Write the red led high when the lift is stopped here.
-    digitalWrite(LIFT_HERE_LED, send_is_lift_here && recieved_action == WAITING);
+    digitalWrite(LIFT_HERE_LED, !digitalRead(REED) /*&& recieved_action == WAITING*/);
 
     // Write the led in the button high when the stop is accepted
     if (recieved_stop_accepted_for_down)
     {
-        digitalWrite(BUTTON_DOWN_LED, LOW);
+        digitalWrite(BUTTON_DOWN_LED, HIGH);
     }
     else
     {
-        digitalWrite(BUTTON_DOWN_LED, HIGH);
+        digitalWrite(BUTTON_DOWN_LED, LOW);
     }
     if (recieved_stop_accepted_for_up)
     {
-        digitalWrite(BUTTON_UP_LED, LOW);
+        digitalWrite(BUTTON_UP_LED, HIGH);
         Serial.println("stop for up accepted");
     }
     else
     {
-        digitalWrite(BUTTON_UP_LED, HIGH);
+        digitalWrite(BUTTON_UP_LED, LOW);
         //Serial.println("checking");
     }
 

@@ -61,8 +61,6 @@ bool blinkState = false;
 
 void setup() {
   // setup i2c
-  Serial.begin(9600);
-  Serial.println("Deniz etage online");
   Wire.begin(DENIZ_ETAGE);  //join i2c bus with address 2
   Wire.onReceive(receiveEvent);
   Wire.onRequest(requestEvent);
@@ -97,7 +95,6 @@ void writeDigit(int i) {
 
 // i2c receive
 void receiveEvent() {
-  Serial.println("receive");
   liftEtage = Wire.read();
   liftState = Wire.read();
 
@@ -109,7 +106,6 @@ void receiveEvent() {
 
 // i2c request
 void requestEvent() {
-  Serial.println("request");
   Wire.write(1);
   Wire.write(liftHere);
   Wire.write(liftStop);
@@ -133,11 +129,11 @@ void loop() {
 
   // blink display
   if (liftState == LIFTMOVING) {
-    if (blinkState == 0 && millis() - blinkTime > 200) {
+    if (blinkState == 0 && millis() - blinkTime > 100) {
       blinkState = 1;
       blinkTime = millis();
     }
-    if (blinkState == 1 && millis() - blinkTime > 200) {
+    if (blinkState == 1 && millis() - blinkTime > 100) {
       blinkState = 0;
       blinkTime = millis();
     }
