@@ -63,15 +63,6 @@ typedef struct Stop {
 Stop *stops[STOPS_MAX_LENGTH] = { 0 };
 uint8_t stops_length = 0;
 
-// Function that removes the first stop from the stops array
-void stops_shift() {
-  free(stops[0]);
-  for (uint8_t i = 1; i < stops_length; i++) {
-    stops[i - 1] = stops[i];
-  }
-  stops_length--;
-}
-
 // Vars for the end stop wait
 #define WAIT_TIME 1500
 #define WAIT_STATE_OFF 0
@@ -80,35 +71,50 @@ uint8_t wait_state = 0;
 uint32_t wait_time = 0;
 
 // Stops compare algorithm
-// -1 = stop is earlier
+// -1 = the stop is earlier
 // 0 = don't move stop
-// 1 = stop is later
+// 1 = the stop is later
 int16_t stops_compare(Stop *a, Stop *b) {
+  // If the direction is different
   if (a->direction != b->direction) {
+    // And a is an end stop and b is not move a earlier
     if (a->end && !b->end) {
       return -1;
     }
+
+    // When b is an end and a is not move a later
     if (!a->end && b->end) {
       return 1;
     }
   }
+
+  // When a is the same direction as the lift now is moving and b is not move a earlier
   if (a->direction == stops[0]->direction && b->direction != stops[0]->direction) {
     return -1;
   }
+
+  // When b is the same direction as the lift is moving and a is not move a later
   if (a->direction != stops[0]->direction && b->direction == stops[0]->direction) {
     return 1;
   }
+
+  // If a is closer to the current lift position then b move a earlier
   if (abs(lift_etage - a->etage) < abs(lift_etage - b->etage)) {
     return -1;
   }
+
+  // If b is closer to the current lift position then a move b earlier
   if (abs(lift_etage - a->etage) > abs(lift_etage - b->etage)) {
     return 1;
   }
+
+  // If you make it trough here a is on the right place
   return 0;
 }
 
 // Function that moves the lift cabine to the first stop etage
 void goto_first_stop() {
+  // Set the lift state to moving
   lift_state = LIFT_STATE_MOVING;
 
   // Set the direction of the motor
@@ -127,6 +133,7 @@ void goto_first_stop() {
 
 // Function that updates the stops array with a new stop or edits a stop
 void update_stops(uint8_t etage, int8_t direction, uint8_t end) {
+  // Check if the stops array is not over written (This should never happen)
   if (stops_length >= STOPS_MAX_LENGTH) {
     #ifdef DEBUG
       Serial.println("ERROR: Max stops length!");
@@ -134,21 +141,29 @@ void update_stops(uint8_t etage, int8_t direction, uint8_t end) {
     return;
   }
 
+  // Check if the stop allready exists
   uint8_t already_stop = 0;
   for (uint8_t i = 0; i < stops_length; i++) {
     if (stops[i]->etage == etage) {
       already_stop = 1;
-      if (!end) {
+
+      // If this is an end stop set end flag
+      if (end) {
+        stops[i]->end = 1;
+      }
+
+      // Else update direction end begin and reported flags
+      else {
         stops[i]->direction = direction;
         stops[i]->begin = 1;
         stops[i]->reported = 0;
-      } else {
-        stops[i]->end = 1;
       }
+
       break;
     }
   }
 
+  // If the stop don't exits allocate a new stop and add it to the stops array
   if (!already_stop) {
     Stop *stop = (Stop *)malloc(sizeof(Stop));
     stop->etage = etage;
@@ -159,6 +174,7 @@ void update_stops(uint8_t etage, int8_t direction, uint8_t end) {
     stops[stops_length++] = stop;
   }
 
+  // Sort the stops array to find the best stop
   qsort(stops, stops_length, sizeof(Stop *), stops_compare);
 }
 
@@ -178,32 +194,54 @@ void setup() {
   pinMode(MOTOR_UP_PIN, OUTPUT);
   pinMode(MOTOR_DOWN_PIN, OUTPUT);
 
-  // Init motor to go down
+  // Init motor to go up (for first search)
   digitalWrite(MOTOR_ENABLE_PIN, HIGH);
   digitalWrite(MOTOR_UP_PIN, HIGH);
   digitalWrite(MOTOR_DOWN_PIN, LOW);
 }
 
 void loop() {
-  // Check if the etage is at the stop etage
+  // Check if the etage is at the first stop etage
   if (stops_length > 0 && lift_etage == stops[0]->etage) {
+    // Set lift state to still
     lift_state = LIFT_STATE_STILL;
+
+    // Stop the motor
     digitalWrite(MOTOR_ENABLE_PIN, LOW);
+
+    // Check if first stop is not a begin stop but an end stop
     if (!stops[0]->begin && stops[0]->end) {
-      stops_shift();
+      // Set the lift on waiting a little time
       wait_state = WAIT_STATE_ON;
       wait_time = millis();
     } else {
-      stops_shift();
+      // Set the lift state to wait for user input
       lift_state = LIFT_STATE_WAITING;
     }
+
+    // Free the first stop
+    free(stops[0]);
+
+    // Shift all the stop pointers one left
+    for (uint8_t i = 1; i < stops_length; i++) {
+      stops[i - 1] = stops[i];
+    }
+
+    // Decrement the stops array length
+    stops_length--;
   }
 
   // Check of the stop end state is waiting: wait and then go to the next best stop
   if (wait_state == WAIT_STATE_ON && millis() - wait_time > WAIT_TIME) {
+    // Remove the wait state
     wait_state = WAIT_STATE_OFF;
+
+    // If there is another stop
     if (stops_length > 0) {
+      // Resort the stops array
       qsort(stops, stops_length, sizeof(Stop *), stops_compare);
+
+      // Go to the first stop
       goto_first_stop();
     }
   }
@@ -211,16 +249,21 @@ void loop() {
   // Check off the lift state is waiting
   digitalWrite(LED_PIN, lift_state == LIFT_STATE_WAITING);
 
-  // If lift state is waiting get pressed key check if it's a good key and add stop
+  // If lift state is waiting
   if (lift_state == LIFT_STATE_WAITING) {
+    // Get the pressed key number
     uint8_t etage = keypad.getKey() - '0';
+    // If the number is between one and lift etages count and not on the same etage
     if (etage >= 1 && etage <= LIFT_ETAGES_COUNT && etage != lift_etage) {
+      // Add new end stop
       update_stops(etage, etage > lift_etage ? UP : DOWN, true);
+
+      // Go to first stop
       goto_first_stop();
     }
   }
 
-  // Print the information that the master is going to send to all the slaves
+  // Print debug lift state information that the master is going to send to all the slaves
   #ifdef DEBUG
     Serial.print("lift_etage = ");
     Serial.println(lift_etage);
@@ -254,17 +297,24 @@ void loop() {
 
       // Read lift is here value
       uint8_t lift_is_here = Wire.read();
+
+      // If the lift is here update lift etage var
       if (lift_is_here == 1) {
+        // If the lift etage was zero stop the motor (for first etage search)
         if (lift_etage == 0) {
           digitalWrite(MOTOR_ENABLE_PIN, LOW);
         }
+
         lift_etage = etage;
       }
 
       // Read request lift stop value
       int8_t lift_request_stop = Wire.read();
+
+      // If there is a stop add the stop
       if (lift_request_stop != 0) {
           update_stops(etage, lift_request_stop, 0);
+          // First the stop is first and the lift is not waiting go to the first
           if (stops[0]->etage == etage && lift_state != LIFT_STATE_WAITING) {
             goto_first_stop();
           }
