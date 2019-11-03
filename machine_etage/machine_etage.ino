@@ -5,7 +5,7 @@
 // Include the wire library for I2C
 #include <Wire.h>
 
-// Include the keypad library for the input keypad
+// Include the keypad library for the keypad input
 #include <Keypad.h>
 
 // Enable the DEBUG flag
@@ -41,13 +41,17 @@ Keypad keypad = Keypad(makeKeymap(keypad_keys), keypad_row_pins, keypad_column_p
 uint8_t lift_etage = 0;
 uint8_t lift_state = LIFT_STATE_STILL;
 
-// Lift input led pins
+// Lift input led pin
 #define LED_PIN 10
 
 // Motor pins
 #define MOTOR_ENABLE_PIN 11
 #define MOTOR_UP_PIN 12
 #define MOTOR_DOWN_PIN 13
+
+// Button pins
+#define UP_BUTTON_PIN 22
+#define DOWN_BUTTON_PIN 24
 
 // The stop struct
 typedef struct Stop {
@@ -193,6 +197,8 @@ void setup() {
   pinMode(MOTOR_ENABLE_PIN, OUTPUT);
   pinMode(MOTOR_UP_PIN, OUTPUT);
   pinMode(MOTOR_DOWN_PIN, OUTPUT);
+  pinMode(UP_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(DOWN_BUTTON_PIN, INPUT_PULLUP);
 
   // Init motor to go up (for first search)
   digitalWrite(MOTOR_ENABLE_PIN, HIGH);
@@ -201,6 +207,28 @@ void setup() {
 }
 
 void loop() {
+  // Check if there are no stops
+  if (stops_length == 0) {
+    // Check if up button is pressed and enable motor up
+    if (digitalRead(UP_BUTTON_PIN) == LOW) {
+      digitalWrite(MOTOR_ENABLE_PIN, HIGH);
+      digitalWrite(MOTOR_UP_PIN, HIGH);
+      digitalWrite(MOTOR_DOWN_PIN, LOW);
+    }
+
+    // Check if down button is pressed and enable motor down
+    else if (digitalRead(DOWN_BUTTON_PIN) == LOW) {
+      digitalWrite(MOTOR_ENABLE_PIN, HIGH);
+      digitalWrite(MOTOR_UP_PIN, LOW);
+      digitalWrite(MOTOR_DOWN_PIN, HIGH);
+    }
+
+    // Else disable motor
+    else {
+      digitalWrite(MOTOR_ENABLE_PIN, LOW);
+    }
+  }
+
   // Check if the etage is at the first stop etage
   if (stops_length > 0 && lift_etage == stops[0]->etage) {
     // Set lift state to still
