@@ -8,13 +8,13 @@
 
 #define LIFT_HERE_LED 9
 
-#define BUTTON_DOWN A0
+#define BUTTON_DOWN A2
 #define BUTTON_DOWN_LED A1
-#define BUTTON_UP A2
+#define BUTTON_UP A0
 #define BUTTON_UP_LED A3
 #define REED 7
 #define GROUND_PINS_COUNT 5
-const GROUND_PINS{3, 4, 5, 6, 8};
+const uint8_t GROUND_PINS[] = {3, 4, 5, 6, 8};
 
 // Set the display, knipper when the lift is moving.
 void set_display(uint8_t digit)
@@ -62,8 +62,8 @@ void setup_IO()
     //int ground_pins[] = GROUND_PINS;
     for (uint8_t i = 0; i < GROUND_PINS_COUNT; i++)
     {
-        pinMode(ground_pins[i], OUTPUT);
-        digitalWrite(ground_pins[i], LOW);
+        pinMode(GROUND_PINS[i], OUTPUT);
+        digitalWrite(GROUND_PINS[i], LOW);
     }
 }
 
@@ -71,9 +71,10 @@ void setup()
 {
     setup_IO();
     setup_I2C();
+#ifdef TEST
     Serial.begin(9600);
     Serial.println("JACO_ETAGE is online");
-
+#endif
 #ifdef TEST
     Serial.println("testing........");
     digitalWrite(LIFT_HERE_LED, HIGH);
