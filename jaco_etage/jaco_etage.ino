@@ -8,16 +8,13 @@
 
 #define LIFT_HERE_LED 9
 
-#define GROUND_PINS   \
-    {                 \
-        3, 4, 5, 6, 8 \
-    }
-#define GROUND_PINS_COUNT 5
 #define BUTTON_DOWN A0
 #define BUTTON_DOWN_LED A1
 #define BUTTON_UP A2
 #define BUTTON_UP_LED A3
 #define REED 7
+#define GROUND_PINS_COUNT 5
+const GROUND_PINS{3, 4, 5, 6, 8};
 
 // Set the display, knipper when the lift is moving.
 void set_display(uint8_t digit)
@@ -62,7 +59,7 @@ void setup_IO()
     pinMode(dataPin, OUTPUT);
     digitalWrite(BUTTON_UP_LED, LOW);
     digitalWrite(BUTTON_DOWN_LED, LOW);
-    int ground_pins[] = GROUND_PINS;
+    //int ground_pins[] = GROUND_PINS;
     for (uint8_t i = 0; i < GROUND_PINS_COUNT; i++)
     {
         pinMode(ground_pins[i], OUTPUT);
