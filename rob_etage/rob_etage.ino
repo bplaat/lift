@@ -72,6 +72,9 @@ void request_event()
   Wire.write(1);
   Wire.write(lift_here);
   Wire.write(lift_stop);
+  if (liftStop != 0) {
+    liftStop = 0;
+  }
 }
 
 void setup ()
