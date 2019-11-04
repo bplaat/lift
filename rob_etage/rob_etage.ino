@@ -45,7 +45,7 @@ bool lift_stop_down_accepted = 0;
 #define STOP_UP 2
 
 bool blink_state = false;
-int blink_time = millis();
+unsigned long blink_time = millis();
 
 void write_digit(int i) 
 {
