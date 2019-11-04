@@ -5,16 +5,13 @@
 #define LED_DOWN  6
 #define BUTTON_UP  7
 #define BUTTON_DOWN  8
-#define CLOCK_PIN  10  //Pin connected to SH_CP of 74HC595 
-#define DATA_PIN  11   //Pin connected to DS of 74HC595 
+#define CLOCK_PIN  10  //Pin connected to SH_CP of 74HC595
+#define DATA_PIN  11   //Pin connected to DS of 74HC595
 #define LATCH_PIN  12  //Pin connected to ST_CP of 74HC595
 #define REED_SWITCH  13
 
 #define ROB_ETAGE 4
 #define ANSWER_SIZE 3
-
-bool button_up_press = false;
-bool button_down_press = false;
 
 int button_state_up = 0;
 int button_state_down = 0;
@@ -51,7 +48,7 @@ int lift_stop_accepted = 0;
 bool blink_state = false;
 int blink_time = millis();
 
-void write_digit(int i) 
+void write_digit(int i)
 {
   digitalWrite (LATCH_PIN, LOW ); // latchPin low for duration of transmission
   shiftOut (DATA_PIN, CLOCK_PIN, MSBFIRST, dat_array[i]); // send data
@@ -111,12 +108,12 @@ void loop()
 
   if (lift_state != LIFT_MOVING && lift_here) {
     digitalWrite(LED_PIN, HIGH);
-  } 
+  }
   else {
     digitalWrite(LED_PIN, LOW);
   }
 
-  if (lift_state == LIFT_MOVING) 
+  if (lift_state == LIFT_MOVING)
   {
     if (blink_state == 0 && millis() - blink_time > 100) {
       blink_state = 1;
@@ -126,17 +123,17 @@ void loop()
       blink_state = 0;
       blink_time = millis();
     }
-  
-    if (blink_state == 1) 
+
+    if (blink_state == 1)
     {
       write_digit(lift_etage);
-    } 
-    else 
+    }
+    else
     {
       clear_digit();
     }
   }
-  else 
+  else
   {
     write_digit(lift_etage);
   }
@@ -144,32 +141,28 @@ void loop()
   if(lift_stop_accepted == STOP_UP)
   {
     digitalWrite(LED_UP, HIGH);
-  } 
+  }
   else {
-    digitalWrite(LED_UP, LOW);    
+    digitalWrite(LED_UP, LOW);
   }
 
-  button_state_up = !digitalRead(BUTTON_UP);
-
-  if(button_state_up == LOW &&
-  !(lift_state == LIFT_WAITING && lift_here) 
+  if(digitalRead(BUTTON_UP) == LOW &&
+  !(lift_state == LIFT_WAITING && lift_here)
   && lift_stop_accepted == 0 && lift_stop == 0)
   {
     lift_stop = STOP_UP;
   }
 
-  if (lift_stop_accepted == STOP_DOWN) 
+  if (lift_stop_accepted == STOP_DOWN)
   {
     digitalWrite(LED_DOWN, HIGH);
-  } 
+  }
   else {
     digitalWrite(LED_DOWN, LOW);
   }
 
-  button_state_down = !digitalRead(BUTTON_DOWN);
-
-  if(button_state_down == LOW && 
-  !(lift_state == LIFT_WAITING && lift_here) 
+  if(digitalRead(BUTTON_DOWN) == LOW &&
+  !(lift_state == LIFT_WAITING && lift_here)
   && lift_stop_accepted == 0 && lift_stop == 0)
   {
     lift_stop = STOP_DOWN;
