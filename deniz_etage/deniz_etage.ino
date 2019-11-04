@@ -77,13 +77,13 @@ void setup() {
   pinMode(DATAPIN, OUTPUT);
 
   // begin with leds off
-  digitalWrite(REDLED, LOW);
-  digitalWrite(WHITELED, LOW);
-  digitalWrite(LEDPIN, LOW);
+
 }
 
 void clearDigit() {
   digitalWrite(LATCHPIN, LOW);
+  shiftOut(DATAPIN, CLOCKPIN, MSBFIRST, 0); // send data
+  digitalWrite(LATCHPIN, HIGH); // latchPin high to save the data
 }
 
 // function for 7 segment display
