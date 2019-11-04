@@ -71,9 +71,10 @@ void setup()
 {
     setup_IO();
     setup_I2C();
+#ifdef TEST
     Serial.begin(9600);
     Serial.println("JACO_ETAGE is online");
-
+#endif
 #ifdef TEST
     Serial.println("testing........");
     digitalWrite(LIFT_HERE_LED, HIGH);
