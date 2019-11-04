@@ -72,8 +72,8 @@ void request_event()
   Wire.write(1);
   Wire.write(lift_here);
   Wire.write(lift_stop);
-  if (liftStop != 0) {
-    liftStop = 0;
+  if (lift_stop != 0) {
+    lift_stop = 0;
   }
 }
 
@@ -89,8 +89,8 @@ void setup ()
   pinMode(DATA_PIN, OUTPUT);
   pinMode(LED_UP, OUTPUT);
   pinMode(LED_DOWN, OUTPUT);
-  pinMode(BUTTON_UP, INPUT_PULLUP);
-  pinMode(BUTTON_DOWN, INPUT_PULLUP);
+  pinMode(BUTTON_UP, INPUT);
+  pinMode(BUTTON_DOWN, INPUT);
 }
 
 void clear_digit() {
