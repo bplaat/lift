@@ -28,7 +28,7 @@ uint8_t keypad_column_pins[KEYPAD_COLUMNS] = { 6, 7, 8, 9 };
 Keypad keypad = Keypad(makeKeymap(keypad_keys), keypad_row_pins, keypad_column_pins, KEYPAD_ROWS, KEYPAD_COLUMNS);
 
 // Global lift variables
-#define LIFT_ETAGES_COUNT 4
+#define LIFT_ETAGES_COUNT 2
 #define PROTOCOL_REQUEST_MESSAGE_LENGTH 3
 
 #define UP 1
@@ -73,6 +73,28 @@ uint8_t stops_length = 0;
 #define WAIT_STATE_ON 1
 uint8_t wait_state = 0;
 uint32_t wait_time = 0;
+
+// Function that moves the motor up
+void motor_up() {
+  lift_state = LIFT_STATE_MOVING;
+  digitalWrite(MOTOR_UP_PIN, HIGH);
+  digitalWrite(MOTOR_DOWN_PIN, LOW);
+  digitalWrite(MOTOR_ENABLE_PIN, HIGH);
+}
+
+// Function that moves the motor down
+void motor_down() {
+  lift_state = LIFT_STATE_MOVING;
+  digitalWrite(MOTOR_UP_PIN, LOW);
+  digitalWrite(MOTOR_DOWN_PIN, HIGH);
+  digitalWrite(MOTOR_ENABLE_PIN, HIGH);
+}
+
+// Function that stops the motor
+void motor_stop() {
+  lift_state = LIFT_STATE_STILL;
+  digitalWrite(MOTOR_ENABLE_PIN, LOW);
+}
 
 // Stops compare algorithm
 // -1 = the stop is earlier
@@ -123,20 +145,12 @@ void goto_first_stop() {
     Serial.println(stops[0]->etage);
   #endif
 
-  // Set the lift state to moving
-  lift_state = LIFT_STATE_MOVING;
-
-  // Set the direction of the motor
-  if (stops[0]->etage > lift_etage) {
-    digitalWrite(MOTOR_UP_PIN, HIGH);
-    digitalWrite(MOTOR_DOWN_PIN, LOW);
-  } else {
-    digitalWrite(MOTOR_UP_PIN, LOW);
-    digitalWrite(MOTOR_DOWN_PIN, HIGH);
-  }
-
   // Start the motor
-  digitalWrite(MOTOR_ENABLE_PIN, HIGH);
+  if (stops[0]->etage > lift_etage) {
+    motor_up();
+  } else {
+    motor_down();
+  }
 }
 
 // Function that updates the stops array with a new stop or edits a stop
@@ -215,34 +229,23 @@ void loop() {
   if (stops_length == 0) {
     // Check if up button is pressed and enable motor up
     if (digitalRead(UP_BUTTON_PIN) == LOW) {
-      lift_state = LIFT_STATE_MOVING;
-      digitalWrite(MOTOR_ENABLE_PIN, HIGH);
-      digitalWrite(MOTOR_UP_PIN, HIGH);
-      digitalWrite(MOTOR_DOWN_PIN, LOW);
+      motor_up();
     }
 
     // Check if down button is pressed and enable motor down
     else if (digitalRead(DOWN_BUTTON_PIN) == LOW) {
-      lift_state = LIFT_STATE_MOVING;
-      digitalWrite(MOTOR_ENABLE_PIN, HIGH);
-      digitalWrite(MOTOR_UP_PIN, LOW);
-      digitalWrite(MOTOR_DOWN_PIN, HIGH);
+      motor_down();
     }
 
     // Else disable motor
     else {
-      lift_state = LIFT_STATE_STILL;
-      digitalWrite(MOTOR_ENABLE_PIN, LOW);
+      motor_stop();
     }
   }
 
   // Check if the etage is at the first stop etage
   if (stops_length > 0 && lift_etage == stops[0]->etage) {
-    // Set lift state to still
-    lift_state = LIFT_STATE_STILL;
-
-    // Stop the motor
-    digitalWrite(MOTOR_ENABLE_PIN, LOW);
+    motor_stop();
 
     // Check if first stop is not a begin stop but an end stop
     if (!stops[0]->begin && stops[0]->end) {
@@ -335,11 +338,10 @@ void loop() {
 
       // If the lift is here update lift etage var
       if (lift_is_here == 1) {
-        // If the lift etage was zero stop the motor (for first etage search)
+        /* If the lift etage was zero stop the motor (for first etage search)
         if (lift_etage == 0) {
-          lift_state = LIFT_STATE_STILL;
-          digitalWrite(MOTOR_ENABLE_PIN, LOW);
-        }
+          motor_stop();
+        }*/
 
         lift_etage = etage;
       }
