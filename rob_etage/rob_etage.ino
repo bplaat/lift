@@ -13,11 +13,6 @@
 #define ROB_ETAGE 4
 #define ANSWER_SIZE 3
 
-bool button_up_press = false;
-bool button_down_press = false;
-
-int button_state_up = 0;
-int button_state_down = 0;
 int last_state_up = 0;
 int last_state_down = 0;
 
@@ -34,11 +29,12 @@ const byte dat_array[] = {
   B11011110   // 9
 };
 
-int lift_etage = 0;
+int lift_floor = 0;
 int lift_state = 0;
 int lift_here = 0;
 int lift_stop = 0;
-int lift_stop_accepted = 0;
+bool lift_stop_up_accepted = 0;
+bool lift_stop_down_accepted = 0;
 
 #define LIFT_NOT_MOVING 0
 #define LIFT_MOVING 1
@@ -60,33 +56,29 @@ void write_digit(int i)
 
 void receive_event()
 {
-  Serial.println("receive");
-  lift_etage = Wire.read();
+  lift_floor = Wire.read();
   lift_state = Wire.read();
-  if (lift_state == LIFT_WAITING && lift_here) {
-    lift_stop_accepted = 0;
-  }
   int new_lift_stop_accepted = Wire.read();
+  if (lift_state == LIFT_WAITING && lift_here) {
+    lift_stop_up_accepted = 0;
+  }
   if (new_lift_stop_accepted != 0) {
-    lift_stop_accepted = new_lift_stop_accepted;
+    lift_stop_down_accepted = new_lift_stop_accepted;
   }
 }
 
 void request_event()
 {
-  Serial.println("request");
   Wire.write(1);
   Wire.write(lift_here);
   Wire.write(lift_stop);
-  if (lift_stop != 0) {
-    lift_stop = 0;
+  if (liftStop != 0) {
+    liftStop = 0;
   }
 }
 
 void setup ()
 {
-  Serial.begin(9600);
-  Serial.println("Rob etage klaar");
   Wire.begin(ROB_ETAGE);
   Wire.onReceive(receive_event);
   Wire.onRequest(request_event);
@@ -103,6 +95,8 @@ void setup ()
 
 void clear_digit() {
   digitalWrite(LATCH_PIN, LOW);
+  shiftOut (DATA_PIN, CLOCK_PIN, MSBFIRST, 0);
+  digitalWrite (LATCH_PIN, HIGH );
 }
 
 void loop()
@@ -129,7 +123,7 @@ void loop()
   
     if (blink_state == 1) 
     {
-      write_digit(lift_etage);
+      write_digit(lift_floor);
     } 
     else 
     {
@@ -138,10 +132,10 @@ void loop()
   }
   else 
   {
-    write_digit(lift_etage);
+    write_digit(lift_floor);
   }
 
-  if(lift_stop_accepted == STOP_UP)
+  if(lift_stop_up_accepted == STOP_UP)
   {
     digitalWrite(LED_UP, HIGH);
   } 
@@ -149,16 +143,14 @@ void loop()
     digitalWrite(LED_UP, LOW);    
   }
 
-  button_state_up = !digitalRead(BUTTON_UP);
-
-  if(button_state_up == LOW &&
+  if(digitalRead(BUTTON_UP) == LOW &&
   !(lift_state == LIFT_WAITING && lift_here) 
-  && lift_stop_accepted == 0 && lift_stop == 0)
+  && lift_stop_up_accepted == 0 && lift_stop == 0)
   {
     lift_stop = STOP_UP;
   }
 
-  if (lift_stop_accepted == STOP_DOWN) 
+  if (lift_stop_down_accepted == STOP_DOWN) 
   {
     digitalWrite(LED_DOWN, HIGH);
   } 
@@ -166,11 +158,9 @@ void loop()
     digitalWrite(LED_DOWN, LOW);
   }
 
-  button_state_down = !digitalRead(BUTTON_DOWN);
-
-  if(button_state_down == LOW && 
+  if(digitalRead(BUTTON_DOWN) == LOW && 
   !(lift_state == LIFT_WAITING && lift_here) 
-  && lift_stop_accepted == 0 && lift_stop == 0)
+  && lift_stop_down_accepted == 0 && lift_stop == 0)
   {
     lift_stop = STOP_DOWN;
   }

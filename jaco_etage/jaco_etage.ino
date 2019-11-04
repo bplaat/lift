@@ -8,16 +8,13 @@
 
 #define LIFT_HERE_LED 9
 
-#define GROUND_PINS   \
-    {                 \
-        3, 4, 5, 6, 8 \
-    }
-#define GROUND_PINS_COUNT 5
-#define BUTTON_DOWN A0
+#define BUTTON_DOWN A2
 #define BUTTON_DOWN_LED A1
-#define BUTTON_UP A2
+#define BUTTON_UP A0
 #define BUTTON_UP_LED A3
 #define REED 7
+#define GROUND_PINS_COUNT 5
+const uint8_t GROUND_PINS[] = {3, 4, 5, 6, 8};
 
 // Set the display, knipper when the lift is moving.
 void set_display(uint8_t digit)
@@ -31,7 +28,7 @@ void set_display(uint8_t digit)
     else if (knipper_state == false)
     {
         writeDigit(digit);
-        if (millis_start + 1000 < millis())
+        if (millis_start + 100 < millis())
         {
             knipper_state = true;
             millis_start = millis();
@@ -40,7 +37,7 @@ void set_display(uint8_t digit)
     else if (knipper_state == true)
     {
         writeDigit(10);
-        if (millis_start + 1000 < millis())
+        if (millis_start + 100 < millis())
         {
             knipper_state = false;
             millis_start = millis();
@@ -60,17 +57,13 @@ void setup_IO()
     pinMode(latchPin, OUTPUT);
     pinMode(clockPin, OUTPUT);
     pinMode(dataPin, OUTPUT);
-    // pinMode(GROUNT_PIN, OUTPUT);
-    // pinMode(GROUNT_PIN2, OUTPUT);
-    // digitalWrite(GROUNT_PIN, LOW);
-    // digitalWrite(GROUNT_PIN2, LOW);
     digitalWrite(BUTTON_UP_LED, LOW);
     digitalWrite(BUTTON_DOWN_LED, LOW);
-    int ground_pins[] = GROUND_PINS;
+    //int ground_pins[] = GROUND_PINS;
     for (uint8_t i = 0; i < GROUND_PINS_COUNT; i++)
     {
-        pinMode(ground_pins[i], OUTPUT);
-        digitalWrite(ground_pins[i], LOW);
+        pinMode(GROUND_PINS[i], OUTPUT);
+        digitalWrite(GROUND_PINS[i], LOW);
     }
 }
 
@@ -78,9 +71,10 @@ void setup()
 {
     setup_IO();
     setup_I2C();
+#ifdef TEST
     Serial.begin(9600);
     Serial.println("JACO_ETAGE is online");
-
+#endif
 #ifdef TEST
     Serial.println("testing........");
     digitalWrite(LIFT_HERE_LED, HIGH);
@@ -120,17 +114,23 @@ void loop()
     if (!digitalRead(BUTTON_DOWN))
     {
         send_stop = STOP_FOR_DOWN;
+#ifdef TEST
         Serial.println("down-button pressed");
+#endif
     }
     else if (!digitalRead(BUTTON_UP))
     {
         send_stop = STOP_FOR_UP;
+#ifdef TEST
         Serial.println("up-button pressed");
+#endif
     }
     else
     {
         send_stop = NO_STOP_NEEDED;
+#ifdef TEST
         //Serial.println("no stop needed");
+#endif
     }
 
     // read the reed sensor out.
@@ -144,6 +144,9 @@ void loop()
     if (recieved_stop_accepted_for_down)
     {
         digitalWrite(BUTTON_DOWN_LED, HIGH);
+#ifdef TEST
+        Serial.println("stop for down accepted");
+#endif
     }
     else
     {
@@ -152,12 +155,13 @@ void loop()
     if (recieved_stop_accepted_for_up)
     {
         digitalWrite(BUTTON_UP_LED, HIGH);
+#ifdef TEST
         Serial.println("stop for up accepted");
+#endif
     }
     else
     {
         digitalWrite(BUTTON_UP_LED, LOW);
-        //Serial.println("checking");
     }
 
     // Reset the stop accepted byte.
