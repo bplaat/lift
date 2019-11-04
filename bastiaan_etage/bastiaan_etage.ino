@@ -7,7 +7,7 @@
 #include <Wire.h>
 
 // Enable the DEBUG flag
-#define DEBUG
+// #define DEBUG
 
 // The etage address and other protocol constants
 #define ETAGE_ADDRESS 2
@@ -68,7 +68,7 @@ uint8_t lift_is_here = 0;
 int8_t lift_request_stop = 0;
 int8_t lift_stop_accepted = 0;
 
-#define BLINK_TIME 200
+#define BLINK_TIME 100
 #define BLINK_STATE_OFF 0
 #define BLINK_STATE_ON 1
 
