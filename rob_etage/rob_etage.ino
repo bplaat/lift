@@ -155,7 +155,7 @@ void loop()
     digitalWrite(LED_DOWN, LOW);
   }
 
-  if((digitalRead(BUTTON_DOWN) == LOW && 
+  if(digitalRead(BUTTON_DOWN) == LOW && 
   !(lift_state == LIFT_WAITING && lift_here) 
   && lift_stop_down_accepted == 0 && lift_stop == 0)
   {
