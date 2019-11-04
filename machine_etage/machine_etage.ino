@@ -64,7 +64,7 @@ typedef struct Stop {
 
 // The stops array
 #define STOPS_MAX_LENGTH 20
-Stop *stops[STOPS_MAX_LENGTH] = { 0 };
+Stop *stops[STOPS_MAX_LENGTH];
 uint8_t stops_length = 0;
 
 // Vars for the end stop wait
@@ -118,15 +118,19 @@ int16_t stops_compare(Stop *a, Stop *b) {
 
 // Function that moves the lift cabine to the first stop etage
 void goto_first_stop() {
+  #ifdef DEBUG
+    Serial.print("Goto: ");
+    Serial.println(stops[0]->etage);
+  #endif
+
   // Set the lift state to moving
   lift_state = LIFT_STATE_MOVING;
 
   // Set the direction of the motor
-  if (stops[0]->direction == UP) {
+  if (stops[0]->etage > lift_etage) {
     digitalWrite(MOTOR_UP_PIN, HIGH);
     digitalWrite(MOTOR_DOWN_PIN, LOW);
-  }
-  if (stops[0]->direction == DOWN) {
+  } else {
     digitalWrite(MOTOR_UP_PIN, LOW);
     digitalWrite(MOTOR_DOWN_PIN, HIGH);
   }
@@ -137,6 +141,11 @@ void goto_first_stop() {
 
 // Function that updates the stops array with a new stop or edits a stop
 void update_stops(uint8_t etage, int8_t direction, uint8_t end) {
+  #ifdef DEBUG
+    Serial.print("Update: ");
+    Serial.println(etage);
+  #endif
+
   // Check if the stops array is not over written (This should never happen)
   if (stops_length >= STOPS_MAX_LENGTH) {
     #ifdef DEBUG
@@ -199,12 +208,6 @@ void setup() {
   pinMode(MOTOR_DOWN_PIN, OUTPUT);
   pinMode(UP_BUTTON_PIN, INPUT_PULLUP);
   pinMode(DOWN_BUTTON_PIN, INPUT_PULLUP);
-
-  // Move lift up
-  lift_state = LIFT_STATE_MOVING;
-  digitalWrite(MOTOR_ENABLE_PIN, HIGH);
-  digitalWrite(MOTOR_UP_PIN, HIGH);
-  digitalWrite(MOTOR_DOWN_PIN, LOW);
 }
 
 void loop() {
@@ -296,12 +299,12 @@ void loop() {
   }
 
   // Print debug lift state information that the master is going to send to all the slaves
-  #ifdef DEBUG
+  /*#ifdef DEBUG
     Serial.print("lift_etage = ");
     Serial.println(lift_etage);
     Serial.print("lift_state = ");
     Serial.println(lift_state);
-  #endif
+  #endif*/
 
   // Loop over all the etages and send and receive information
   for (uint8_t etage = 1; etage <= LIFT_ETAGES_COUNT; etage++) {
