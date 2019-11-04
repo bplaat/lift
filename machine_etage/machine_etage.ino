@@ -200,7 +200,8 @@ void setup() {
   pinMode(UP_BUTTON_PIN, INPUT_PULLUP);
   pinMode(DOWN_BUTTON_PIN, INPUT_PULLUP);
 
-  // Init motor to go up (for first search)
+  // Move lift up
+  lift_state = LIFT_STATE_MOVING;
   digitalWrite(MOTOR_ENABLE_PIN, HIGH);
   digitalWrite(MOTOR_UP_PIN, HIGH);
   digitalWrite(MOTOR_DOWN_PIN, LOW);
@@ -211,6 +212,7 @@ void loop() {
   if (stops_length == 0) {
     // Check if up button is pressed and enable motor up
     if (digitalRead(UP_BUTTON_PIN) == LOW) {
+      lift_state = LIFT_STATE_MOVING;
       digitalWrite(MOTOR_ENABLE_PIN, HIGH);
       digitalWrite(MOTOR_UP_PIN, HIGH);
       digitalWrite(MOTOR_DOWN_PIN, LOW);
@@ -218,6 +220,7 @@ void loop() {
 
     // Check if down button is pressed and enable motor down
     else if (digitalRead(DOWN_BUTTON_PIN) == LOW) {
+      lift_state = LIFT_STATE_MOVING;
       digitalWrite(MOTOR_ENABLE_PIN, HIGH);
       digitalWrite(MOTOR_UP_PIN, LOW);
       digitalWrite(MOTOR_DOWN_PIN, HIGH);
@@ -225,6 +228,7 @@ void loop() {
 
     // Else disable motor
     else {
+      lift_state = LIFT_STATE_STILL;
       digitalWrite(MOTOR_ENABLE_PIN, LOW);
     }
   }
@@ -330,6 +334,7 @@ void loop() {
       if (lift_is_here == 1) {
         // If the lift etage was zero stop the motor (for first etage search)
         if (lift_etage == 0) {
+          lift_state = LIFT_STATE_STILL;
           digitalWrite(MOTOR_ENABLE_PIN, LOW);
         }
 
