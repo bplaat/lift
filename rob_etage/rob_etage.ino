@@ -5,16 +5,14 @@
 #define LED_DOWN  6
 #define BUTTON_UP  7
 #define BUTTON_DOWN  8
-#define CLOCK_PIN  10  //Pin connected to SH_CP of 74HC595
-#define DATA_PIN  11   //Pin connected to DS of 74HC595
+#define CLOCK_PIN  10  //Pin connected to SH_CP of 74HC595 
+#define DATA_PIN  11   //Pin connected to DS of 74HC595 
 #define LATCH_PIN  12  //Pin connected to ST_CP of 74HC595
 #define REED_SWITCH  13
 
 #define ROB_ETAGE 4
 #define ANSWER_SIZE 3
 
-int button_state_up = 0;
-int button_state_down = 0;
 int last_state_up = 0;
 int last_state_down = 0;
 
@@ -31,11 +29,12 @@ const byte dat_array[] = {
   B11011110   // 9
 };
 
-int lift_etage = 0;
+int lift_floor = 0;
 int lift_state = 0;
 int lift_here = 0;
 int lift_stop = 0;
-int lift_stop_accepted = 0;
+bool lift_stop_up_accepted = 0;
+bool lift_stop_down_accepted = 0;
 
 #define LIFT_NOT_MOVING 0
 #define LIFT_MOVING 1
@@ -48,7 +47,7 @@ int lift_stop_accepted = 0;
 bool blink_state = false;
 int blink_time = millis();
 
-void write_digit(int i)
+void write_digit(int i) 
 {
   digitalWrite (LATCH_PIN, LOW ); // latchPin low for duration of transmission
   shiftOut (DATA_PIN, CLOCK_PIN, MSBFIRST, dat_array[i]); // send data
@@ -57,33 +56,26 @@ void write_digit(int i)
 
 void receive_event()
 {
-  Serial.println("receive");
-  lift_etage = Wire.read();
+  lift_floor = Wire.read();
   lift_state = Wire.read();
-  if (lift_state == LIFT_WAITING && lift_here) {
-    lift_stop_accepted = 0;
-  }
   int new_lift_stop_accepted = Wire.read();
+  if (lift_state == LIFT_WAITING && lift_here) {
+    lift_stop_up_accepted = 0;
+  }
   if (new_lift_stop_accepted != 0) {
-    lift_stop_accepted = new_lift_stop_accepted;
+    lift_stop_down_accepted = new_lift_stop_accepted;
   }
 }
 
 void request_event()
 {
-  Serial.println("request");
   Wire.write(1);
   Wire.write(lift_here);
   Wire.write(lift_stop);
-  if (lift_stop != 0) {
-    lift_stop = 0;
-  }
 }
 
 void setup ()
 {
-  Serial.begin(9600);
-  Serial.println("Rob etage klaar");
   Wire.begin(ROB_ETAGE);
   Wire.onReceive(receive_event);
   Wire.onRequest(request_event);
@@ -100,6 +92,8 @@ void setup ()
 
 void clear_digit() {
   digitalWrite(LATCH_PIN, LOW);
+  shiftOut (DATA_PIN, CLOCK_PIN, MSBFIRST, 0);
+  digitalWrite (LATCH_PIN, HIGH );
 }
 
 void loop()
@@ -108,12 +102,12 @@ void loop()
 
   if (lift_state != LIFT_MOVING && lift_here) {
     digitalWrite(LED_PIN, HIGH);
-  }
+  } 
   else {
     digitalWrite(LED_PIN, LOW);
   }
 
-  if (lift_state == LIFT_MOVING)
+  if (lift_state == LIFT_MOVING) 
   {
     if (blink_state == 0 && millis() - blink_time > 100) {
       blink_state = 1;
@@ -123,47 +117,47 @@ void loop()
       blink_state = 0;
       blink_time = millis();
     }
-
-    if (blink_state == 1)
+  
+    if (blink_state == 1) 
     {
-      write_digit(lift_etage);
-    }
-    else
+      write_digit(lift_floor);
+    } 
+    else 
     {
       clear_digit();
     }
   }
-  else
+  else 
   {
-    write_digit(lift_etage);
+    write_digit(lift_floor);
   }
 
-  if(lift_stop_accepted == STOP_UP)
+  if(lift_stop_up_accepted == STOP_UP)
   {
     digitalWrite(LED_UP, HIGH);
-  }
+  } 
   else {
-    digitalWrite(LED_UP, LOW);
+    digitalWrite(LED_UP, LOW);    
   }
 
   if(digitalRead(BUTTON_UP) == LOW &&
-  !(lift_state == LIFT_WAITING && lift_here)
-  && lift_stop_accepted == 0 && lift_stop == 0)
+  !(lift_state == LIFT_WAITING && lift_here) 
+  && lift_stop_up_accepted == 0 && lift_stop == 0)
   {
     lift_stop = STOP_UP;
   }
 
-  if (lift_stop_accepted == STOP_DOWN)
+  if (lift_stop_down_accepted == STOP_DOWN) 
   {
     digitalWrite(LED_DOWN, HIGH);
-  }
+  } 
   else {
     digitalWrite(LED_DOWN, LOW);
   }
 
-  if(digitalRead(BUTTON_DOWN) == LOW &&
-  !(lift_state == LIFT_WAITING && lift_here)
-  && lift_stop_accepted == 0 && lift_stop == 0)
+  if((digitalRead(BUTTON_DOWN) == LOW && 
+  !(lift_state == LIFT_WAITING && lift_here) 
+  && lift_stop_down_accepted == 0 && lift_stop == 0)
   {
     lift_stop = STOP_DOWN;
   }
