@@ -34,6 +34,7 @@ int lift_floor = 0;
 int lift_state = 0;
 int lift_here = 0;
 int lift_stop = 0;
+bool send_for_lift = 0;
 bool lift_stop_up_accepted = 0;
 bool lift_stop_down_accepted = 0;
 
@@ -65,6 +66,7 @@ void receive_event()
   }
   if (new_lift_stop_accepted != 0) {
     lift_stop_down_accepted = new_lift_stop_accepted;
+    send_for_lift = 0;
   }
 }
 
@@ -75,6 +77,7 @@ void request_event()
   Wire.write(lift_stop);
   if (lift_stop != 0) {
     lift_stop = 0;
+    send_for_lift = 1;
   }
 }
 
@@ -146,7 +149,8 @@ void loop()
 
   if(digitalRead(BUTTON_UP) == LOW &&
   !(lift_state == LIFT_WAITING && lift_here) 
-  && lift_stop_up_accepted == 0 && lift_stop == 0)
+  && lift_stop_up_accepted == 0 && send_for_lift = 0
+  && lift_stop == 0)
   {
     lift_stop = STOP_UP;
   }
@@ -161,7 +165,8 @@ void loop()
 
   if(digitalRead(BUTTON_DOWN) == LOW && 
   !(lift_state == LIFT_WAITING && lift_here) 
-  && lift_stop_down_accepted == 0 && lift_stop == 0)
+  && lift_stop_down_accepted == 0 && send_for_lift = 0 
+  && lift_stop == 0)
   {
     lift_stop = STOP_DOWN;
   }
