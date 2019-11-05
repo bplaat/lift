@@ -93,8 +93,8 @@ void setup ()
   pinMode(DATA_PIN, OUTPUT);
   pinMode(LED_UP, OUTPUT);
   pinMode(LED_DOWN, OUTPUT);
-  pinMode(BUTTON_UP, INPUT);
-  pinMode(BUTTON_DOWN, INPUT);
+  pinMode(BUTTON_UP, INPUT_PULLUP);
+  pinMode(BUTTON_DOWN, INPUT_PULLUP);
 }
 
 void clear_digit() {
