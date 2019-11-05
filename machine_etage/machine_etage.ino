@@ -93,6 +93,8 @@ void motor_down() {
 // Function that stops the motor
 void motor_stop() {
   lift_state = LIFT_STATE_STILL;
+  digitalWrite(MOTOR_UP_PIN, LOW);
+  digitalWrite(MOTOR_DOWN_PIN, LOW);
   digitalWrite(MOTOR_ENABLE_PIN, LOW);
 }
 
@@ -140,13 +142,19 @@ int16_t stops_compare(Stop *a, Stop *b) {
 
 // Function that moves the lift cabine to the first stop etage
 void goto_first_stop() {
+  uint8_t direction = stops[0]->etage > lift_etage;
+
   #ifdef DEBUG
-    Serial.print("Goto: ");
-    Serial.println(stops[0]->etage);
+    Serial.print("Go from ");
+    Serial.print(lift_etage);
+    Serial.print(" to ");
+    Serial.print(stops[0]->etage);
+    Serial.print(" thats ");
+    Serial.println(direction == 1 ? "up" : "down");
   #endif
 
   // Start the motor
-  if (stops[0]->etage > lift_etage) {
+  if (direction) {
     motor_up();
   } else {
     motor_down();
@@ -156,8 +164,12 @@ void goto_first_stop() {
 // Function that updates the stops array with a new stop or edits a stop
 void update_stops(uint8_t etage, int8_t direction, uint8_t end) {
   #ifdef DEBUG
-    Serial.print("Update: ");
-    Serial.println(etage);
+    Serial.print("Add stop to ");
+    Serial.print(etage);
+    Serial.print(" with direction ");
+    Serial.print(direction == 1 ? "up" : "down");
+    Serial.print(" and is ");
+    Serial.println(end == 0 ? "begin" : "end");
   #endif
 
   // Check if the stops array is not over written (This should never happen)
