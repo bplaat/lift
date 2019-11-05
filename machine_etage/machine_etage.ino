@@ -28,7 +28,7 @@ uint8_t keypad_column_pins[KEYPAD_COLUMNS] = { 6, 7, 8, 9 };
 Keypad keypad = Keypad(makeKeymap(keypad_keys), keypad_row_pins, keypad_column_pins, KEYPAD_ROWS, KEYPAD_COLUMNS);
 
 // Global lift variables
-#define LIFT_ETAGES_COUNT 2
+#define LIFT_ETAGES_COUNT 4
 #define LIFT_ETAGE_ADDRESS_OFFSET 10
 #define PROTOCOL_REQUEST_MESSAGE_LENGTH 3
 
@@ -50,9 +50,10 @@ uint8_t lift_state = LIFT_STATE_STILL;
 #define MOTOR_UP_PIN 12
 #define MOTOR_DOWN_PIN 13
 
-// Button pins
+// Motor overwrite buttons
 #define UP_BUTTON_PIN 22
 #define DOWN_BUTTON_PIN 24
+uint8_t motor_overwrite = 0;
 
 // The stop struct
 typedef struct Stop {
@@ -235,6 +236,13 @@ void setup() {
   pinMode(MOTOR_DOWN_PIN, OUTPUT);
   pinMode(UP_BUTTON_PIN, INPUT_PULLUP);
   pinMode(DOWN_BUTTON_PIN, INPUT_PULLUP);
+
+  // Set the motor to move down
+  motor_down();
+
+  #ifdef DEBUG
+    Serial.println("Setup done");
+  #endif
 }
 
 void loop() {
@@ -242,16 +250,19 @@ void loop() {
   if (stops_length == 0) {
     // Check if up button is pressed and enable motor up
     if (digitalRead(UP_BUTTON_PIN) == LOW) {
+      motor_overwrite = UP;
       motor_up();
     }
 
     // Check if down button is pressed and enable motor down
     else if (digitalRead(DOWN_BUTTON_PIN) == LOW) {
+      motor_overwrite = DOWN;
       motor_down();
     }
 
-    // Else disable motor
-    else {
+    // Else stop motor if lift is moving
+    else if (motor_overwrite != 0) {
+      motor_overwrite = 0;
       motor_stop();
     }
   }
@@ -351,10 +362,10 @@ void loop() {
 
       // If the lift is here update lift etage var
       if (lift_is_here == 1) {
-        /* If the lift etage was zero stop the motor (for first etage search)
+        // If the lift etage was zero stop the motor (for first etage search)
         if (lift_etage == 0) {
           motor_stop();
-        }*/
+        }
 
         lift_etage = etage;
       }
