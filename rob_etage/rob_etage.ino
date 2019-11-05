@@ -10,8 +10,9 @@
 #define LATCH_PIN  12  //Pin connected to ST_CP of 74HC595
 #define REED_SWITCH  13
 
-#define ROB_ETAGE 4
+#define ROB_FLOOR 4
 #define ANSWER_SIZE 3
+#define FLOOR_OFFSET 10
 
 int last_state_up = 0;
 int last_state_down = 0;
@@ -33,6 +34,7 @@ int lift_floor = 0;
 int lift_state = 0;
 int lift_here = 0;
 int lift_stop = 0;
+bool send_for_lift = 0;
 bool lift_stop_up_accepted = 0;
 bool lift_stop_down_accepted = 0;
 
@@ -64,6 +66,7 @@ void receive_event()
   }
   if (new_lift_stop_accepted != 0) {
     lift_stop_down_accepted = new_lift_stop_accepted;
+    send_for_lift = 0;
   }
 }
 
@@ -72,14 +75,15 @@ void request_event()
   Wire.write(1);
   Wire.write(lift_here);
   Wire.write(lift_stop);
-  if (liftStop != 0) {
-    liftStop = 0;
+  if (lift_stop != 0) {
+    lift_stop = 0;
+    send_for_lift = 1;
   }
 }
 
 void setup ()
 {
-  Wire.begin(ROB_ETAGE);
+  Wire.begin(ROB_FLOOR + FLOOR_OFFSET);
   Wire.onReceive(receive_event);
   Wire.onRequest(request_event);
   pinMode(LED_PIN, OUTPUT);
@@ -89,8 +93,8 @@ void setup ()
   pinMode(DATA_PIN, OUTPUT);
   pinMode(LED_UP, OUTPUT);
   pinMode(LED_DOWN, OUTPUT);
-  pinMode(BUTTON_UP, INPUT_PULLUP);
-  pinMode(BUTTON_DOWN, INPUT_PULLUP);
+  pinMode(BUTTON_UP, INPUT);
+  pinMode(BUTTON_DOWN, INPUT);
 }
 
 void clear_digit() {
@@ -145,7 +149,7 @@ void loop()
 
   if(digitalRead(BUTTON_UP) == LOW &&
   !(lift_state == LIFT_WAITING && lift_here) 
-  && lift_stop_up_accepted == 0 && lift_stop == 0)
+  && lift_stop_up_accepted == 0 && send_for_lift == 0 && lift_stop == 0)
   {
     lift_stop = STOP_UP;
   }
@@ -160,7 +164,7 @@ void loop()
 
   if(digitalRead(BUTTON_DOWN) == LOW && 
   !(lift_state == LIFT_WAITING && lift_here) 
-  && lift_stop_down_accepted == 0 && lift_stop == 0)
+  && lift_stop_down_accepted == 0 && send_for_lift == 0 && lift_stop == 0)
   {
     lift_stop = STOP_DOWN;
   }

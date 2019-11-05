@@ -12,6 +12,7 @@
 // The etage address and other protocol constants
 #define ETAGE_ADDRESS 2
 #define PROTOCOL_RECEIVE_MESSAGE_LENGTH 3
+#define LIFT_ETAGE_ADDRESS_OFFSET 10
 
 // The pins for the digit display
 uint8_t digit_display_pins[7] = { 2, 3, 4, 5, 6, 7, 8 };
@@ -65,7 +66,8 @@ void digit_display_set_digit(uint8_t digit) {
 uint8_t lift_etage = 0;
 uint8_t lift_state = 0;
 uint8_t lift_is_here = 0;
-int8_t lift_request_stop = 0;
+int8_t lift_stop_request = 0;
+int8_t lift_stop_send = 0;
 int8_t lift_stop_accepted = 0;
 
 #define BLINK_TIME 100
@@ -93,6 +95,7 @@ void receiveEvent(int16_t num_bytes) {
     int8_t new_lift_stop_accepted = Wire.read();
     if (new_lift_stop_accepted != 0) {
       lift_stop_accepted = new_lift_stop_accepted;
+      lift_stop_send = 0;
       #ifdef DEBUG
         Serial.print("-> lift_stop_accepted = ");
         Serial.println(lift_stop_accepted);
@@ -119,13 +122,14 @@ void requestEvent() {
     Serial.println(lift_is_here);
   #endif
 
-  Wire.write(lift_request_stop);
+  Wire.write(lift_stop_request);
   #ifdef DEBUG
-    Serial.print("<- lift_request_stop = ");
-    Serial.println(lift_request_stop);
+    Serial.print("<- lift_stop_request = ");
+    Serial.println(lift_stop_request);
   #endif
-  if (lift_request_stop != 0) {
-    lift_request_stop = 0;
+  if (lift_stop_request != 0) {
+    lift_stop_request = 0;
+    lift_stop_send = 1;
   }
 }
 
@@ -137,7 +141,7 @@ void setup() {
   #endif
 
   // Init the I2C functions
-  Wire.begin(ETAGE_ADDRESS);
+  Wire.begin(ETAGE_ADDRESS + LIFT_ETAGE_ADDRESS_OFFSET);
   Wire.onReceive(receiveEvent);
   Wire.onRequest(requestEvent);
 
@@ -186,9 +190,9 @@ void loop() {
   if (
     digitalRead(UP_BUTTON_PIN) == LOW &&
     !(lift_state == LIFT_STATE_WAITING && lift_is_here) &&
-    lift_stop_accepted == 0 && lift_request_stop == 0
+    lift_stop_accepted == 0 && lift_stop_send == 0 && lift_stop_request == 0
   ) {
-    lift_request_stop = UP;
+    lift_stop_request = UP;
   }
 
   // Handle stop down button
@@ -196,8 +200,8 @@ void loop() {
   if (
     digitalRead(DOWN_BUTTON_PIN) == LOW &&
     !(lift_state != LIFT_STATE_WAITING && lift_is_here) &&
-    lift_stop_accepted == 0 && lift_request_stop == 0
+    lift_stop_accepted == 0 && lift_stop_send == 0 && lift_stop_request == 0
   ) {
-    lift_request_stop = DOWN;
+    lift_stop_request = DOWN;
   }
 }
