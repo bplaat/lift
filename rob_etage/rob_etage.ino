@@ -10,8 +10,9 @@
 #define LATCH_PIN  12  //Pin connected to ST_CP of 74HC595
 #define REED_SWITCH  13
 
-#define ROB_ETAGE 4
+#define ROB_FLOOR 4
 #define ANSWER_SIZE 3
+#define FLOOR_OFFSET 10
 
 int last_state_up = 0;
 int last_state_down = 0;
@@ -79,7 +80,7 @@ void request_event()
 
 void setup ()
 {
-  Wire.begin(ROB_ETAGE);
+  Wire.begin(ROB_FLOOR + FLOOR_OFFSET);
   Wire.onReceive(receive_event);
   Wire.onRequest(request_event);
   pinMode(LED_PIN, OUTPUT);
