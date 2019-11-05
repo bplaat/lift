@@ -36,7 +36,7 @@ void digit_display_set_digit(uint8_t digit) {
 #define DOWN_BUTTON_PIN 12
 #define DOWN_LED_PIN 13
 
-#define IR_SENSOR_PIN A0
+#define REED_SENSOR_PIN A0
 
 #define TIMER_TIME 1000
 uint32_t timer_time = millis();
@@ -49,11 +49,11 @@ void setup() {
     pinMode(UP_LED_PIN, OUTPUT);
     pinMode(DOWN_BUTTON_PIN, INPUT_PULLUP);
     pinMode(DOWN_LED_PIN, OUTPUT);
-    pinMode(IR_SENSOR_PIN, INPUT);
+    pinMode(REED_SENSOR_PIN, INPUT_PULLUP);
 }
 
 void loop() {
-    digitalWrite(LED_PIN, analogRead(IR_SENSOR_PIN) < 50);
+    digitalWrite(LED_PIN, digitalRead(REED_SENSOR_PIN) == LOW);
 
     if (millis() - timer_time > TIMER_TIME) {
         timer_time = millis();
