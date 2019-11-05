@@ -6,6 +6,7 @@
 
 #define DENIZ_ETAGE 3
 #define ANSWERSIZE 3
+#define ETAGE_OFFSET 10
 
 // led's
 #define WHITELED 5 // led up button
@@ -13,19 +14,19 @@
 #define LEDPIN 7   // led for here
 
 // buttons
-#define BUTTONPINUP 4
-#define BUTTONPINDOWN 2
+#define BUTTON_PIN_UP 4
+#define BUTTON_PIN_DOWN 2
 
 int buttonStateUp = 0;
 int buttonStateDown = 0;
 
 // reed
-#define REEDSWITCHPIN 8 // reed sensor pin connected to
+#define REED_SWITCH_PIN 8 // reed sensor pin connected to
 
 // shiftout
-#define CLOCKPIN 10  // pin connected to SRCLK of 74HC595 
-#define DATAPIN 11   // pin connected to SER of 74HC595 
-#define LATCHPIN 12  // pin connected to RCLK of 74HC595
+#define CLOCK_PIN 10  // pin connected to SRCLK of 74HC595 
+#define DATA_PIN 11   // pin connected to SER of 74HC595 
+#define LATCH_PIN 12  // pin connected to RCLK of 74HC595
 
 // 7 segment display
 const byte datArray[] = {
@@ -48,33 +49,33 @@ int liftHere = 0;
 int liftStop = 0;
 int liftStopAccepted = 0;
 
-#define LIFTNOTMOVING 0
-#define LIFTMOVING 1
-#define LIFTWAITING 2
+#define LIFT_NOT_MOVING 0
+#define LIFT_MOVING 1
+#define LIFT_WAITING 2
 
-#define NOSTOP 0
-#define STOPFORUP 1
-#define STOPFORDOWN -1
+#define NO_STOP 0
+#define STOP_FOR_UP 1
+#define STOP_FOR_DOWN -1
 
 unsigned long blinkTime = millis();
 bool blinkState = false;
 
 void setup() {
   // setup i2c
-  Wire.begin(DENIZ_ETAGE);  //join i2c bus with address 2
+  Wire.begin(DENIZ_ETAGE + ETAGE_OFFSET);  //join i2c bus with address 2
   Wire.onReceive(receiveEvent);
   Wire.onRequest(requestEvent);
 
   // all the lift parts
   pinMode(WHITELED, OUTPUT);
   pinMode(REDLED, OUTPUT);
-  pinMode(BUTTONPINUP, INPUT_PULLUP);
-  pinMode(BUTTONPINDOWN, INPUT_PULLUP);
-  pinMode(REEDSWITCHPIN, INPUT);
+  pinMode(BUTTON_PIN_UP, INPUT_PULLUP);
+  pinMode(BUTTON_PIN_DOWN, INPUT_PULLUP);
+  pinMode(REED_SWITCH_PIN, INPUT);
   pinMode(LEDPIN, OUTPUT);
-  pinMode(LATCHPIN, OUTPUT);
-  pinMode(CLOCKPIN, OUTPUT);
-  pinMode(DATAPIN, OUTPUT);
+  pinMode(LATCH_PIN, OUTPUT);
+  pinMode(CLOCK_PIN, OUTPUT);
+  pinMode(DATA_PIN, OUTPUT);
 
   // begin with leds off
   pinMode(REDLED, LOW);
@@ -83,16 +84,16 @@ void setup() {
 }
 
 void clearDigit() {
-  digitalWrite(LATCHPIN, LOW);
-  shiftOut(DATAPIN, CLOCKPIN, MSBFIRST, 0); // send data
-  digitalWrite(LATCHPIN, HIGH); // latchPin high to save the data
+  digitalWrite(LATCH_PIN, LOW);
+  shiftOut(DATA_PIN, CLOCK_PIN, MSBFIRST, 0); // send data
+  digitalWrite(LATCH_PIN, HIGH); // LATCH_PIN high to save the data
 }
 
 // function for 7 segment display
 void writeDigit(int i) {
-  digitalWrite(LATCHPIN, LOW); // latchPin low for duration of transmission
-  shiftOut(DATAPIN, CLOCKPIN, MSBFIRST, datArray[i]); // send data
-  digitalWrite(LATCHPIN, HIGH); // latchPin high to save the data
+  digitalWrite(LATCH_PIN, LOW); // LATCH_PIN low for duration of transmission
+  shiftOut(DATA_PIN, CLOCK_PIN, MSBFIRST, datArray[i]); // send data
+  digitalWrite(LATCH_PIN, HIGH); // LATCH_PIN high to save the data
 }
 
 // i2c receive
@@ -118,19 +119,19 @@ void requestEvent() {
 
 void loop() {
   // check if lift is here
-  liftHere = digitalRead(REEDSWITCHPIN);
-  if (liftState != LIFTMOVING && liftHere) {
+  liftHere = digitalRead(REED_SWITCH_PIN);
+  if (liftState != LIFT_MOVING && liftHere) {
     digitalWrite(LEDPIN, HIGH);
   } else {
     digitalWrite(LEDPIN, LOW);
   }
 
-  if (liftState == LIFTWAITING && liftHere) {
+  if (liftState == LIFT_WAITING && liftHere) {
     liftStopAccepted = 0;
   }
 
   // blink display
-  if (liftState == LIFTMOVING) {
+  if (liftState == LIFT_MOVING) {
     if (blinkState == 0 && millis() - blinkTime > 100) {
       blinkState = 1;
       blinkTime = millis();
@@ -150,30 +151,30 @@ void loop() {
   }
 
   // button for stop up
-  if (liftStopAccepted == STOPFORUP) {
+  if (liftStopAccepted == STOP_FOR_UP) {
     digitalWrite(WHITELED, HIGH);
   } else {
     digitalWrite(WHITELED, LOW);
   }
 
-  buttonStateUp = digitalRead(BUTTONPINUP);
+  buttonStateUp = digitalRead(BUTTON_PIN_UP);
   if (buttonStateUp == LOW &&
-      !(liftState == LIFTWAITING && liftHere) &&
+      !(liftState == LIFT_WAITING && liftHere) &&
       liftStopAccepted == 0 && liftStop == 0) {
-    liftStop = STOPFORUP;
+    liftStop = STOP_FOR_UP;
   }
 
   // button for stop down
-  if (liftStopAccepted == STOPFORDOWN) {
+  if (liftStopAccepted == STOP_FOR_DOWN) {
     digitalWrite(REDLED, HIGH);
   } else {
     digitalWrite(REDLED, LOW);
   }
 
-  buttonStateDown = digitalRead(BUTTONPINDOWN);
+  buttonStateDown = digitalRead(BUTTON_PIN_DOWN);
   if (buttonStateDown == LOW &&
-      !(liftState == LIFTWAITING && liftHere) &&
+      !(liftState == LIFT_WAITING && liftHere) &&
       liftStopAccepted == 0 && liftStop == 0) {
-    liftStop = STOPFORDOWN;
+    liftStop = STOP_FOR_DOWN;
   }
 }

@@ -19,9 +19,11 @@
 
 #define LIFT_IS_HERE 1
 #define JACO_ETAGE 1
+#define ADDRESS_OFFSET 10
 
 uint8_t send_is_lift_here = 0;
-uint8_t send_stop = 0;
+uint8_t send_stop_request = 0;
+bool lift_stop_send = 0;
 
 uint8_t recieved_floor = 0;
 uint8_t recieved_action = WAITING;
@@ -48,20 +50,22 @@ void receiveEvent()
 // Request event hander for I2C
 void requestEvent()
 {
-    static bool stop_sent = false;
+
     Wire.write(1);
     Wire.write(send_is_lift_here);
-    if (send_stop == false)
+    Wire.write(send_stop_request);
+    if (send_stop_request != 0)
     {
-        Wire.write(send_stop);
-        send_stop == true;
+        send_stop_request = 0;
+        lift_stop_send = true;
     }
+    send_stop_request = 0;
 }
 
 // set the I2C up.
 void setup_I2C()
 {
-    Wire.begin(JACO_ETAGE);
+    Wire.begin(JACO_ETAGE + ADDRESS_OFFSET);
     Wire.onReceive(receiveEvent);
     Wire.onRequest(requestEvent);
 }
