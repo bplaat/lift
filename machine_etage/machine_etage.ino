@@ -28,7 +28,7 @@ uint8_t keypad_column_pins[KEYPAD_COLUMNS] = { 6, 7, 8, 9 };
 Keypad keypad = Keypad(makeKeymap(keypad_keys), keypad_row_pins, keypad_column_pins, KEYPAD_ROWS, KEYPAD_COLUMNS);
 
 // Global lift variables
-#define LIFT_ETAGES_COUNT 4
+#define LIFT_ETAGES_COUNT 2
 #define PROTOCOL_REQUEST_MESSAGE_LENGTH 3
 
 #define UP 1
@@ -64,7 +64,7 @@ typedef struct Stop {
 
 // The stops array
 #define STOPS_MAX_LENGTH 20
-Stop *stops[STOPS_MAX_LENGTH] = { 0 };
+Stop *stops[STOPS_MAX_LENGTH];
 uint8_t stops_length = 0;
 
 // Vars for the end stop wait
@@ -73,6 +73,30 @@ uint8_t stops_length = 0;
 #define WAIT_STATE_ON 1
 uint8_t wait_state = 0;
 uint32_t wait_time = 0;
+
+// Function that moves the motor up
+void motor_up() {
+  lift_state = LIFT_STATE_MOVING;
+  digitalWrite(MOTOR_UP_PIN, HIGH);
+  digitalWrite(MOTOR_DOWN_PIN, LOW);
+  digitalWrite(MOTOR_ENABLE_PIN, HIGH);
+}
+
+// Function that moves the motor down
+void motor_down() {
+  lift_state = LIFT_STATE_MOVING;
+  digitalWrite(MOTOR_UP_PIN, LOW);
+  digitalWrite(MOTOR_DOWN_PIN, HIGH);
+  digitalWrite(MOTOR_ENABLE_PIN, HIGH);
+}
+
+// Function that stops the motor
+void motor_stop() {
+  lift_state = LIFT_STATE_STILL;
+  digitalWrite(MOTOR_UP_PIN, LOW);
+  digitalWrite(MOTOR_DOWN_PIN, LOW);
+  digitalWrite(MOTOR_ENABLE_PIN, LOW);
+}
 
 // Stops compare algorithm
 // -1 = the stop is earlier
@@ -118,25 +142,36 @@ int16_t stops_compare(Stop *a, Stop *b) {
 
 // Function that moves the lift cabine to the first stop etage
 void goto_first_stop() {
-  // Set the lift state to moving
-  lift_state = LIFT_STATE_MOVING;
+  uint8_t direction = stops[0]->etage > lift_etage;
 
-  // Set the direction of the motor
-  if (stops[0]->direction == UP) {
-    digitalWrite(MOTOR_UP_PIN, HIGH);
-    digitalWrite(MOTOR_DOWN_PIN, LOW);
-  }
-  if (stops[0]->direction == DOWN) {
-    digitalWrite(MOTOR_UP_PIN, LOW);
-    digitalWrite(MOTOR_DOWN_PIN, HIGH);
-  }
+  #ifdef DEBUG
+    Serial.print("Go from ");
+    Serial.print(lift_etage);
+    Serial.print(" to ");
+    Serial.print(stops[0]->etage);
+    Serial.print(" thats ");
+    Serial.println(direction == 1 ? "up" : "down");
+  #endif
 
   // Start the motor
-  digitalWrite(MOTOR_ENABLE_PIN, HIGH);
+  if (direction) {
+    motor_up();
+  } else {
+    motor_down();
+  }
 }
 
 // Function that updates the stops array with a new stop or edits a stop
 void update_stops(uint8_t etage, int8_t direction, uint8_t end) {
+  #ifdef DEBUG
+    Serial.print("Add stop to ");
+    Serial.print(etage);
+    Serial.print(" with direction ");
+    Serial.print(direction == 1 ? "up" : "down");
+    Serial.print(" and is ");
+    Serial.println(end == 0 ? "begin" : "end");
+  #endif
+
   // Check if the stops array is not over written (This should never happen)
   if (stops_length >= STOPS_MAX_LENGTH) {
     #ifdef DEBUG
@@ -199,12 +234,6 @@ void setup() {
   pinMode(MOTOR_DOWN_PIN, OUTPUT);
   pinMode(UP_BUTTON_PIN, INPUT_PULLUP);
   pinMode(DOWN_BUTTON_PIN, INPUT_PULLUP);
-
-  // Move lift up
-  lift_state = LIFT_STATE_MOVING;
-  digitalWrite(MOTOR_ENABLE_PIN, HIGH);
-  digitalWrite(MOTOR_UP_PIN, HIGH);
-  digitalWrite(MOTOR_DOWN_PIN, LOW);
 }
 
 void loop() {
@@ -212,34 +241,23 @@ void loop() {
   if (stops_length == 0) {
     // Check if up button is pressed and enable motor up
     if (digitalRead(UP_BUTTON_PIN) == LOW) {
-      lift_state = LIFT_STATE_MOVING;
-      digitalWrite(MOTOR_ENABLE_PIN, HIGH);
-      digitalWrite(MOTOR_UP_PIN, HIGH);
-      digitalWrite(MOTOR_DOWN_PIN, LOW);
+      motor_up();
     }
 
     // Check if down button is pressed and enable motor down
     else if (digitalRead(DOWN_BUTTON_PIN) == LOW) {
-      lift_state = LIFT_STATE_MOVING;
-      digitalWrite(MOTOR_ENABLE_PIN, HIGH);
-      digitalWrite(MOTOR_UP_PIN, LOW);
-      digitalWrite(MOTOR_DOWN_PIN, HIGH);
+      motor_down();
     }
 
     // Else disable motor
     else {
-      lift_state = LIFT_STATE_STILL;
-      digitalWrite(MOTOR_ENABLE_PIN, LOW);
+      motor_stop();
     }
   }
 
   // Check if the etage is at the first stop etage
   if (stops_length > 0 && lift_etage == stops[0]->etage) {
-    // Set lift state to still
-    lift_state = LIFT_STATE_STILL;
-
-    // Stop the motor
-    digitalWrite(MOTOR_ENABLE_PIN, LOW);
+    motor_stop();
 
     // Check if first stop is not a begin stop but an end stop
     if (!stops[0]->begin && stops[0]->end) {
@@ -296,12 +314,12 @@ void loop() {
   }
 
   // Print debug lift state information that the master is going to send to all the slaves
-  #ifdef DEBUG
+  /*#ifdef DEBUG
     Serial.print("lift_etage = ");
     Serial.println(lift_etage);
     Serial.print("lift_state = ");
     Serial.println(lift_state);
-  #endif
+  #endif*/
 
   // Loop over all the etages and send and receive information
   for (uint8_t etage = 1; etage <= LIFT_ETAGES_COUNT; etage++) {
@@ -332,11 +350,10 @@ void loop() {
 
       // If the lift is here update lift etage var
       if (lift_is_here == 1) {
-        // If the lift etage was zero stop the motor (for first etage search)
+        /* If the lift etage was zero stop the motor (for first etage search)
         if (lift_etage == 0) {
-          lift_state = LIFT_STATE_STILL;
-          digitalWrite(MOTOR_ENABLE_PIN, LOW);
-        }
+          motor_stop();
+        }*/
 
         lift_etage = etage;
       }

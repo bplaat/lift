@@ -48,9 +48,14 @@ void receiveEvent()
 // Request event hander for I2C
 void requestEvent()
 {
+    static bool stop_sent = false;
     Wire.write(1);
     Wire.write(send_is_lift_here);
-    Wire.write(send_stop);
+    if (send_stop == false)
+    {
+        Wire.write(send_stop);
+        send_stop == true;
+    }
 }
 
 // set the I2C up.

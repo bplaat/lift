@@ -56,7 +56,7 @@ int liftStopAccepted = 0;
 #define STOPFORUP 1
 #define STOPFORDOWN -1
 
-int blinkTime = millis();
+unsigned long blinkTime = millis();
 bool blinkState = false;
 
 void setup() {
@@ -77,7 +77,9 @@ void setup() {
   pinMode(DATAPIN, OUTPUT);
 
   // begin with leds off
-
+  pinMode(REDLED, LOW);
+  pinMode(WHITELED, LOW);
+  pinMode(LEDPIN, LOW);
 }
 
 void clearDigit() {
@@ -156,8 +158,8 @@ void loop() {
 
   buttonStateUp = digitalRead(BUTTONPINUP);
   if (buttonStateUp == LOW &&
-    !(liftState == LIFTWAITING && liftHere) &&
-    liftStopAccepted == 0 && liftStop == 0) {
+      !(liftState == LIFTWAITING && liftHere) &&
+      liftStopAccepted == 0 && liftStop == 0) {
     liftStop = STOPFORUP;
   }
 
@@ -170,8 +172,8 @@ void loop() {
 
   buttonStateDown = digitalRead(BUTTONPINDOWN);
   if (buttonStateDown == LOW &&
-    !(liftState == LIFTWAITING && liftHere) &&
-    liftStopAccepted == 0 && liftStop == 0) {
+      !(liftState == LIFTWAITING && liftHere) &&
+      liftStopAccepted == 0 && liftStop == 0) {
     liftStop = STOPFORDOWN;
   }
 }
