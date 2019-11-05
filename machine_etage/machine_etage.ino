@@ -29,6 +29,7 @@ Keypad keypad = Keypad(makeKeymap(keypad_keys), keypad_row_pins, keypad_column_p
 
 // Global lift variables
 #define LIFT_ETAGES_COUNT 2
+#define LIFT_ETAGE_ADDRESS_OFFSET 10
 #define PROTOCOL_REQUEST_MESSAGE_LENGTH 3
 
 #define UP 1
@@ -334,14 +335,14 @@ void loop() {
     }
 
     // Send the information conform protocol
-    Wire.beginTransmission(etage);
+    Wire.beginTransmission(etage + LIFT_ETAGE_ADDRESS_OFFSET);
     Wire.write(lift_etage);
     Wire.write(lift_state);
     Wire.write(lift_stop_accepted);
     Wire.endTransmission();
 
     // Request other information conform protocol
-    if (Wire.requestFrom(etage, PROTOCOL_REQUEST_MESSAGE_LENGTH) == PROTOCOL_REQUEST_MESSAGE_LENGTH) {
+    if (Wire.requestFrom(etage + LIFT_ETAGE_ADDRESS_OFFSET, PROTOCOL_REQUEST_MESSAGE_LENGTH) == PROTOCOL_REQUEST_MESSAGE_LENGTH) {
       // Read ping value and ignore
       Wire.read();
 

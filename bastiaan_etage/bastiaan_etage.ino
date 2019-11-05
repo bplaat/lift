@@ -12,6 +12,7 @@
 // The etage address and other protocol constants
 #define ETAGE_ADDRESS 2
 #define PROTOCOL_RECEIVE_MESSAGE_LENGTH 3
+#define LIFT_ETAGE_ADDRESS_OFFSET 10
 
 // The pins for the digit display
 uint8_t digit_display_pins[7] = { 2, 3, 4, 5, 6, 7, 8 };
@@ -140,7 +141,7 @@ void setup() {
   #endif
 
   // Init the I2C functions
-  Wire.begin(ETAGE_ADDRESS);
+  Wire.begin(ETAGE_ADDRESS + LIFT_ETAGE_ADDRESS_OFFSET);
   Wire.onReceive(receiveEvent);
   Wire.onRequest(requestEvent);
 
