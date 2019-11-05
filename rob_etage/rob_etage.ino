@@ -149,8 +149,7 @@ void loop()
 
   if(digitalRead(BUTTON_UP) == LOW &&
   !(lift_state == LIFT_WAITING && lift_here) 
-  && lift_stop_up_accepted == 0 && send_for_lift = 0
-  && lift_stop == 0)
+  && lift_stop_up_accepted == 0 && send_for_lift == 0 && lift_stop == 0)
   {
     lift_stop = STOP_UP;
   }
@@ -165,8 +164,7 @@ void loop()
 
   if(digitalRead(BUTTON_DOWN) == LOW && 
   !(lift_state == LIFT_WAITING && lift_here) 
-  && lift_stop_down_accepted == 0 && send_for_lift = 0 
-  && lift_stop == 0)
+  && lift_stop_down_accepted == 0 && send_for_lift == 0 && lift_stop == 0)
   {
     lift_stop = STOP_DOWN;
   }
