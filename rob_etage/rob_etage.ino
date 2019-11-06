@@ -61,9 +61,6 @@ void receive_event()
   lift_floor = Wire.read();
   lift_state = Wire.read();
   int new_lift_stop_accepted = Wire.read();
-  if (lift_state == LIFT_WAITING && lift_here) {
-    lift_stop_accepted = 0;
-  }
   if (new_lift_stop_accepted != 0) {
     lift_stop_accepted = new_lift_stop_accepted;
     send_for_lift = 0;
@@ -114,6 +111,10 @@ void loop()
     digitalWrite(LED_PIN, LOW);
   }
 
+  if (lift_state == LIFT_WAITING && lift_here) {
+    lift_stop_accepted = 0;
+  }
+
   if (lift_state == LIFT_MOVING) 
   {
     if (blink_state == 0 && millis() - blink_time > 100) {
@@ -147,7 +148,7 @@ void loop()
     digitalWrite(LED_UP, LOW);    
   }
 
-  if(digitalRead(BUTTON_UP) == HIGH &&
+  if(digitalRead(BUTTON_UP) == LOW &&
   !(lift_state == LIFT_WAITING && lift_here) 
   && lift_stop_accepted == 0 && send_for_lift == 0 && lift_stop == 0)
   {
@@ -162,7 +163,7 @@ void loop()
     digitalWrite(LED_DOWN, LOW);
   }
 
-  if(digitalRead(BUTTON_DOWN) == HIGH && 
+  if(digitalRead(BUTTON_DOWN) == LOW && 
   !(lift_state == LIFT_WAITING && lift_here) 
   && lift_stop_accepted == 0 && send_for_lift == 0 && lift_stop == 0)
   {
