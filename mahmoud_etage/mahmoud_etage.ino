@@ -3,7 +3,7 @@
 #define ETAGE_ADDRESS 5
 #define LIFT_ETAGE_ADDRESS_OFFSET 10
 
-#define A_DISPLAY_PIN 8
+#define A_DISPLAY_PIN 8                    // seven-seg pins...
 #define B_DISPLAY_PIN 9
 #define C_DISPLAY_PIN 4
 #define D_DISPLAY_PIN 5
@@ -11,20 +11,20 @@
 #define F_DISPLAY_PIN 2
 #define G_DISPLAY_PIN 3
 
-#define LED_PIN 11
+#define LED_PIN A0                      //led
 
-#define UP_BUTTON_PIN 10
+#define UP_BUTTON_PIN 10                // but-1
 #define UP_LED_PIN 13
 
-#define DOWN_BUTTON_PIN 12
+#define DOWN_BUTTON_PIN 12              //but-2
 #define DOWN_LED_PIN 7
 
-#define REED_PIN A0
+#define REED_PIN 11
 
 #define UP 1
 #define DOWN -1
 
-#define LIFT_STATE_STILL 0
+#define LIFT_STATE_STILL 0                   //lift states
 #define LIFT_STATE_MOVING 1
 #define LIFT_STATE_WAITING 2
 
@@ -37,7 +37,7 @@ int lift_stop_request = 0;
 int lift_stop_send = 0;
 int lift_stop_accepted = 0;
 
-#define BLINK_TIME 100
+#define BLINK_TIME 100                    //while moving the led blinks
 #define BLINK_STATE_OFF 0
 #define BLINK_STATE_ON 1
 
@@ -45,7 +45,7 @@ int blink_state = 0;
 int blink_time = millis();
 
 void displayDigit(int digit) {
-  if (digit != 1 && digit != 4) digitalWrite(A_DISPLAY_PIN, HIGH);
+  if (digit != 1 && digit != 4) digitalWrite(A_DISPLAY_PIN, HIGH);                                    //seven segment states...
   if (digit != 5 && digit != 6) digitalWrite(B_DISPLAY_PIN, HIGH);
   if (digit != 2) digitalWrite(C_DISPLAY_PIN, HIGH);
   if (digit != 1 && digit != 4 && digit != 7) digitalWrite(D_DISPLAY_PIN, HIGH);
@@ -55,13 +55,13 @@ void displayDigit(int digit) {
 }
 
 void clearDigit() {
-  digitalWrite(a, LOW);
-  digitalWrite(b, LOW);
-  digitalWrite(c, LOW);
-  digitalWrite(d, LOW);
-  digitalWrite(e, LOW);
-  digitalWrite(f, LOW);
-  digitalWrite(g, LOW);
+  digitalWrite(A_DISPLAY_PIN, LOW;
+  digitalWrite(B_DISPLAY_PIN, LOW);
+  digitalWrite(C_DISPLAY_PIN, LOW);
+  digitalWrite(D_DISPLAY_PIN, LOW);
+  digitalWrite(E_DISPLAY_PIN, LOW);
+  digitalWrite(F_DISPLAY_PIN, LOW);
+  digitalWrite(G_DISPLAY_PIN, LOW);
 }
 
 void receiveEvent() {
