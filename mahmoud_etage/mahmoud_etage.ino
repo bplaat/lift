@@ -1,3 +1,9 @@
+/*Mahmoud Sakr
+ klas: TI1E
+ */
+
+
+
 #include <Wire.h>
 
 #define ETAGE_ADDRESS 5
@@ -42,7 +48,7 @@ int lift_stop_accepted = 0;
 #define BLINK_STATE_ON 1
 
 int blink_state = 0;
-int blink_time = millis();
+unsigned long blink_time = millis();
 
 void displayDigit(int digit) {
   if (digit != 1 && digit != 4) digitalWrite(A_DISPLAY_PIN, HIGH);                                    //seven segment states...
@@ -55,7 +61,7 @@ void displayDigit(int digit) {
 }
 
 void clearDigit() {
-  digitalWrite(A_DISPLAY_PIN, LOW;
+  digitalWrite(A_DISPLAY_PIN, LOW);
   digitalWrite(B_DISPLAY_PIN, LOW);
   digitalWrite(C_DISPLAY_PIN, LOW);
   digitalWrite(D_DISPLAY_PIN, LOW);
@@ -106,7 +112,7 @@ void setup() {
 }
 
 void loop() {
-  lift_is_here = digitalRead(REED_SENSOR_PIN) == LOW;
+  lift_is_here = digitalRead(REED_PIN) == LOW;
 
   if (lift_state != LIFT_STATE_MOVING && lift_is_here) {
     digitalWrite(LED_PIN, HIGH);
@@ -117,6 +123,8 @@ void loop() {
   if (lift_state == LIFT_STATE_WAITING && lift_is_here) {
     lift_stop_accepted = 0;
   }
+
+  clearDigit();
 
   if (lift_state == LIFT_STATE_MOVING) {
     if (blink_state == BLINK_STATE_OFF && millis() - blink_time > BLINK_TIME) {
@@ -130,8 +138,6 @@ void loop() {
 
     if (blink_state == BLINK_STATE_ON) {
       displayDigit(lift_etage);
-    } else {
-      clearDigit();
     }
   } else {
     displayDigit(lift_etage);
