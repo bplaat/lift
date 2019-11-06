@@ -35,8 +35,8 @@ int lift_state = 0;
 int lift_here = 0;
 int lift_stop = 0;
 bool send_for_lift = 0;
-bool lift_stop_up_accepted = 0;
-bool lift_stop_down_accepted = 0;
+int lift_stop_accepted = 0;
+
 
 #define LIFT_NOT_MOVING 0
 #define LIFT_MOVING 1
@@ -61,11 +61,8 @@ void receive_event()
   lift_floor = Wire.read();
   lift_state = Wire.read();
   int new_lift_stop_accepted = Wire.read();
-  if (lift_state == LIFT_WAITING && lift_here) {
-    lift_stop_up_accepted = 0;
-  }
   if (new_lift_stop_accepted != 0) {
-    lift_stop_down_accepted = new_lift_stop_accepted;
+    lift_stop_accepted = new_lift_stop_accepted;
     send_for_lift = 0;
   }
 }
@@ -93,8 +90,8 @@ void setup ()
   pinMode(DATA_PIN, OUTPUT);
   pinMode(LED_UP, OUTPUT);
   pinMode(LED_DOWN, OUTPUT);
-  pinMode(BUTTON_UP, INPUT);
-  pinMode(BUTTON_DOWN, INPUT);
+  pinMode(BUTTON_UP, INPUT_PULLUP);
+  pinMode(BUTTON_DOWN, INPUT_PULLUP);
 }
 
 void clear_digit() {
@@ -112,6 +109,10 @@ void loop()
   } 
   else {
     digitalWrite(LED_PIN, LOW);
+  }
+
+  if (lift_state == LIFT_WAITING && lift_here) {
+    lift_stop_accepted = 0;
   }
 
   if (lift_state == LIFT_MOVING) 
@@ -139,7 +140,7 @@ void loop()
     write_digit(lift_floor);
   }
 
-  if(lift_stop_up_accepted == STOP_UP)
+  if(lift_stop_accepted == STOP_UP)
   {
     digitalWrite(LED_UP, HIGH);
   } 
@@ -149,12 +150,12 @@ void loop()
 
   if(digitalRead(BUTTON_UP) == LOW &&
   !(lift_state == LIFT_WAITING && lift_here) 
-  && lift_stop_up_accepted == 0 && send_for_lift == 0 && lift_stop == 0)
+  && lift_stop_accepted == 0 && send_for_lift == 0 && lift_stop == 0)
   {
     lift_stop = STOP_UP;
   }
 
-  if (lift_stop_down_accepted == STOP_DOWN) 
+  if (lift_stop_accepted == STOP_DOWN) 
   {
     digitalWrite(LED_DOWN, HIGH);
   } 
@@ -164,7 +165,7 @@ void loop()
 
   if(digitalRead(BUTTON_DOWN) == LOW && 
   !(lift_state == LIFT_WAITING && lift_here) 
-  && lift_stop_down_accepted == 0 && send_for_lift == 0 && lift_stop == 0)
+  && lift_stop_accepted == 0 && send_for_lift == 0 && lift_stop == 0)
   {
     lift_stop = STOP_DOWN;
   }

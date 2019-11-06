@@ -111,23 +111,23 @@ void loop()
     set_display(recieved_floor);
 
     // Check if the buttons are pressed.
-    if (!digitalRead(BUTTON_DOWN))
+    if (!digitalRead(BUTTON_DOWN) && lift_stop_send == false && !(recieved_action == WAITING && send_is_lift_here))
     {
-        send_stop = STOP_FOR_DOWN;
+        send_stop_request = STOP_FOR_DOWN;
 #ifdef TEST
         Serial.println("down-button pressed");
 #endif
     }
-    else if (!digitalRead(BUTTON_UP))
+    else if (!digitalRead(BUTTON_UP) && lift_stop_send == false && !(recieved_action == WAITING && send_is_lift_here))
     {
-        send_stop = STOP_FOR_UP;
+        send_stop_request = STOP_FOR_UP;
 #ifdef TEST
         Serial.println("up-button pressed");
 #endif
     }
     else
     {
-        send_stop = NO_STOP_NEEDED;
+        send_stop_request = NO_STOP_NEEDED;
 #ifdef TEST
         //Serial.println("no stop needed");
 #endif
@@ -169,5 +169,6 @@ void loop()
     {
         recieved_stop_accepted_for_down = 0;
         recieved_stop_accepted_for_up = 0;
+        lift_stop_send = false;
     }
 }
