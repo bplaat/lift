@@ -9,7 +9,7 @@
 #include <Keypad.h>
 
 // Enable the DEBUG flag
-#define DEBUG
+// #define DEBUG
 
 // Keypad vars
 #define KEYPAD_ROWS 4
@@ -28,7 +28,7 @@ uint8_t keypad_column_pins[KEYPAD_COLUMNS] = { 6, 7, 8, 9 };
 Keypad keypad = Keypad(makeKeymap(keypad_keys), keypad_row_pins, keypad_column_pins, KEYPAD_ROWS, KEYPAD_COLUMNS);
 
 // Global lift variables
-#define LIFT_ETAGES_COUNT 4
+#define LIFT_ETAGES_COUNT 5
 #define LIFT_ETAGE_ADDRESS_OFFSET 10
 #define PROTOCOL_REQUEST_MESSAGE_LENGTH 3
 
@@ -324,14 +324,6 @@ void loop() {
       goto_first_stop();
     }
   }
-
-  // Print debug lift state information that the master is going to send to all the slaves
-  /*#ifdef DEBUG
-    Serial.print("lift_etage = ");
-    Serial.println(lift_etage);
-    Serial.print("lift_state = ");
-    Serial.println(lift_state);
-  #endif*/
 
   // Loop over all the etages and send and receive information
   for (uint8_t etage = 1; etage <= LIFT_ETAGES_COUNT; etage++) {
