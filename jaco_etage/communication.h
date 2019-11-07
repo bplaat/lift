@@ -11,8 +11,8 @@
 #define WAITING 2
 
 #define NO_STOP_NEEDED 0
-#define STOP_FOR_DOWN 1
-#define STOP_FOR_UP 2
+#define STOP_FOR_DOWN -1
+#define STOP_FOR_UP 1
 
 #define STOP_FOR_DOWN_ACCEPTED -1
 #define STOP_FOR_UP_ACCEPTED 1
