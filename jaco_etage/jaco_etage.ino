@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <Arduino.h>
 
-#define TEST
+//#define TEST
 
 #define LIFT_HERE_LED 9
 
@@ -147,7 +147,7 @@ void loop()
 
     //  Write the red led high when the lift is stopped here.
     digitalWrite(LIFT_HERE_LED, !digitalRead(REED) /*&& recieved_action == WAITING*/);
-    /*
+
     // Write the led in the button high when the stop is accepted
     if (recieved_stop_accepted_for_down)
     {
@@ -171,7 +171,7 @@ void loop()
     {
         digitalWrite(BUTTON_UP_LED, LOW);
     }
-*/
+
     // Reset the stop accepted byte.
     if (recieved_action == WAITING && !digitalRead(REED))
     {
