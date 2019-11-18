@@ -6,8 +6,8 @@
 
 #include <Wire.h>
 
-#define ETAGE_ADDRESS 5
-#define LIFT_ETAGE_ADDRESS_OFFSET 10
+#define FLOOR_ADDRESS 5
+#define LIFT_FLOOR_ADDRESS_OFFSET 10
 
 #define A_DISPLAY_PIN 8                    // seven-seg pins...
 #define B_DISPLAY_PIN 9
@@ -34,10 +34,10 @@
 #define LIFT_STATE_MOVING 1
 #define LIFT_STATE_WAITING 2
 
-int lift_etage = 0;
-int lift_state = 0;
+int lift_floor = 0;
+int lift_floor = 0;
 
-int lift_is_here = 0;
+int lift_here = 0;
 
 int lift_stop_request = 0;
 int lift_stop_send = 0;
@@ -71,7 +71,7 @@ void clearDigit() {
 }
 
 void receiveEvent() {
-  lift_etage = Wire.read();
+  lift_floor = Wire.read();
   lift_state = Wire.read();
   int new_lift_stop_accepted = Wire.read();
   if (new_lift_stop_accepted != 0) {
@@ -82,7 +82,7 @@ void receiveEvent() {
 
 void requestEvent() {
   Wire.write(1);
-  Wire.write(lift_is_here);
+  Wire.write(lift_here);
   Wire.write(lift_stop_request);
   if (lift_stop_request != 0) {
     lift_stop_request = 0;
@@ -91,7 +91,7 @@ void requestEvent() {
 }
 
 void setup() {
-  Wire.begin(ETAGE_ADDRESS + LIFT_ETAGE_ADDRESS_OFFSET);
+  Wire.begin(FLOOR_ADDRESS + LIFT_FLOOR_ADDRESS_OFFSET);
   Wire.onReceive(receiveEvent);
   Wire.onRequest(requestEvent);
 
@@ -112,15 +112,15 @@ void setup() {
 }
 
 void loop() {
-  lift_is_here = digitalRead(REED_PIN) == LOW;
+  lift_here = digitalRead(REED_PIN) == LOW;
 
-  if (lift_state != LIFT_STATE_MOVING && lift_is_here) {
+  if (lift_state != LIFT_STATE_MOVING && lift_here) {
     digitalWrite(LED_PIN, HIGH);
   } else {
     digitalWrite(LED_PIN, LOW);
   }
 
-  if (lift_state == LIFT_STATE_WAITING && lift_is_here) {
+  if (lift_state == LIFT_STATE_WAITING && lift_here) {
     lift_stop_accepted = 0;
   }
 
@@ -137,10 +137,10 @@ void loop() {
     }
 
     if (blink_state == BLINK_STATE_ON) {
-      displayDigit(lift_etage);
+      displayDigit(lift_floor);
     }
   } else {
-    displayDigit(lift_etage);
+    displayDigit(lift_floor);
   }
 
   if (lift_stop_accepted == UP) {
@@ -151,7 +151,7 @@ void loop() {
 
   if (
     digitalRead(UP_BUTTON_PIN) == LOW &&
-    !(lift_state == LIFT_STATE_WAITING && lift_is_here) &&
+    !(lift_state == LIFT_STATE_WAITING && lift_here) &&
     lift_stop_accepted == 0 && lift_stop_send == 0 && lift_stop_request == 0
   ) {
     lift_stop_request = UP;
@@ -165,7 +165,7 @@ void loop() {
 
   if (
     digitalRead(DOWN_BUTTON_PIN) == LOW &&
-    !(lift_state != LIFT_STATE_WAITING && lift_is_here) &&
+    !(lift_state != LIFT_STATE_WAITING && lift_here) &&
     lift_stop_accepted == 0 && lift_stop_send == 0 && lift_stop_request == 0
   ) {
     lift_stop_request = DOWN;
